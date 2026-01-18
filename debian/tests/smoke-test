@@ -1,0 +1,32 @@
+#!/bin/sh
+# AIDEV-NOTE: Autopkgtest smoke test for installed package
+set -e
+
+echo "Testing statdash-cli --help"
+statdash-cli --help
+
+echo "Testing statdash-cli --version"
+statdash-cli --version
+
+echo "Testing statdash-cli health --help"
+statdash-cli health --help
+
+echo "Testing statdash-cli submit --help"
+statdash-cli submit --help
+
+echo "Testing statdash-cli groups --help"
+statdash-cli groups --help
+
+echo "Testing statdash-cli jobs --help"
+statdash-cli jobs --help
+
+echo "Testing statdash-cli config --help"
+statdash-cli config --help
+
+echo "Testing statdash-cli group-config --help"
+statdash-cli group-config --help
+
+echo "Testing statdash-cli completion --help"
+statdash-cli completion --help
+
+echo "All smoke tests passed!"

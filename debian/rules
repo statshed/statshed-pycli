@@ -1,0 +1,5 @@
+#!/usr/bin/make -f
+
+# AIDEV-NOTE: Indentation MUST be tabs, not spaces (Makefile requirement)
+%:
+	dh $@ --with python3 --buildsystem=pybuild
