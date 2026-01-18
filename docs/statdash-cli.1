@@ -1,0 +1,251 @@
+.\" Man page for statdash-cli
+.\" AIDEV-NOTE: This man page is included in both PyPI sdist and Debian packages
+.TH STATDASH-CLI 1 "January 2026" "statdash-cli 1.0.0" "User Commands"
+.SH NAME
+statdash-cli \- command-line interface for StatDash status dashboard
+.SH SYNOPSIS
+.B statdash-cli
+[\fIOPTIONS\fR] \fICOMMAND\fR [\fIARGS\fR]...
+.SH DESCRIPTION
+.B statdash-cli
+is a command-line tool for interacting with the StatDash status dashboard.
+It allows users to submit job status updates, check system health, list
+groups and jobs, and configure timeout settings.
+.PP
+StatDash is a lightweight dashboard for tracking the status of periodic
+tasks such as cron jobs, CI/CD pipelines, and backup processes.
+.SH GLOBAL OPTIONS
+.TP
+.BR \-u ", " \-\-url " " \fIURL\fR
+StatDash API URL. Overrides configuration file and environment variable.
+.TP
+.BR \-c ", " \-\-config " " \fIPATH\fR
+Path to configuration file.
+.TP
+.BR \-q ", " \-\-quiet
+Suppress non-error output.
+.TP
+.B \-\-no\-color
+Disable colored output.
+.TP
+.B \-\-json
+Output in JSON format.
+.TP
+.B \-\-version
+Show the version and exit.
+.TP
+.B \-\-help
+Show help message and exit.
+.SH COMMANDS
+.SS submit
+Submit a job status update.
+.PP
+.B statdash-cli submit
+.BR \-g " " \fIGROUP\fR
+.BR \-j " " \fIJOB\fR
+.BR \-s " " \fISTATUS\fR
+[\fB\-m\fR \fIMESSAGE\fR]
+[\fB\-\-strict\fR]
+.TP
+.BR \-g ", " \-\-group " " \fIGROUP\fR
+Group name (required).
+.TP
+.BR \-j ", " \-\-job " " \fIJOB\fR
+Job name (required).
+.TP
+.BR \-s ", " \-\-status " " \fISTATUS\fR
+Status value: \fBsuccess\fR, \fBerror\fR, or \fBprogress\fR (required).
+.TP
+.BR \-m ", " \-\-message " " \fIMESSAGE\fR
+Optional status message.
+.TP
+.B \-\-strict
+Exit with error code on failure. By default, errors are swallowed and the
+command exits with code 0 for safe use in scripts with \fBset \-e\fR.
+.SS health
+Check overall system health.
+.PP
+.B statdash-cli health
+[\fB\-\-json\fR]
+.PP
+Returns exit code 0 if healthy, 1 if unhealthy.
+.SS groups
+List all groups with health summaries.
+.PP
+.B statdash-cli groups
+[\fB\-\-json\fR]
+.SS jobs
+List all jobs in a group.
+.PP
+.B statdash-cli jobs
+[\fB\-\-json\fR]
+\fIGROUP_NAME\fR
+.SS config
+View or update global configuration.
+.PP
+.B statdash-cli config
+[\fB\-p\fR \fIMINUTES\fR]
+[\fB\-s\fR \fIHOURS\fR]
+[\fB\-\-json\fR]
+.TP
+.BR \-p ", " \-\-progress\-timeout " " \fIMINUTES\fR
+Set progress timeout in minutes.
+.TP
+.BR \-s ", " \-\-staleness\-timeout " " \fIHOURS\fR
+Set staleness timeout in hours.
+.PP
+Without options, displays current configuration.
+.SS group-config
+View or update group-specific configuration.
+.PP
+.B statdash-cli group-config
+[\fIOPTIONS\fR]
+\fIGROUP_NAME\fR
+.TP
+.BR \-p ", " \-\-progress\-timeout " " \fIMINUTES\fR
+Set progress timeout override for this group.
+.TP
+.BR \-s ", " \-\-staleness\-timeout " " \fIHOURS\fR
+Set staleness timeout override for this group.
+.TP
+.B \-\-reset\-progress\-timeout
+Reset progress timeout to global default.
+.TP
+.B \-\-reset\-staleness\-timeout
+Reset staleness timeout to global default.
+.PP
+Without options, displays current group configuration.
+.SS completion
+Generate shell completion script.
+.PP
+.B statdash-cli completion
+\fISHELL\fR
+.PP
+Where \fISHELL\fR is one of: \fBbash\fR, \fBzsh\fR, \fBfish\fR.
+.PP
+Install completions by redirecting output to the appropriate location:
+.RS
+.nf
+\fBbash:\fR statdash-cli completion bash > ~/.local/share/bash-completion/completions/statdash-cli
+\fBzsh:\fR  statdash-cli completion zsh > ~/.zfunc/_statdash-cli
+\fBfish:\fR statdash-cli completion fish > ~/.config/fish/completions/statdash-cli.fish
+.fi
+.RE
+.SH EXIT STATUS
+.TP
+.B 0
+Success.
+.TP
+.B 1
+Health check returned unhealthy status.
+.TP
+.B 2
+API error.
+.TP
+.B 3
+Connection error.
+.TP
+.B 4
+Timeout error.
+.TP
+.B 5
+Configuration error.
+.TP
+.B 10
+Invalid arguments.
+.TP
+.B 11
+Resource not found.
+.SH FILES
+Configuration files are read in the following order (first found wins):
+.TP
+.I ./statdash-cli.yaml
+Current directory configuration.
+.TP
+.I ~/.config/statdash/config.yaml
+User configuration.
+.TP
+.I /etc/statdash/config.yaml
+System-wide configuration.
+.PP
+Example configuration:
+.RS
+.nf
+url: http://localhost:5000
+output_format: table
+color: auto
+timeout: 10
+
+submit:
+  syslog: false
+  strict: false
+.fi
+.RE
+.SH ENVIRONMENT
+.TP
+.B STATDASH_URL
+StatDash API URL. Overridden by \fB\-\-url\fR option and config file.
+.TP
+.B STATDASH_CONFIG
+Path to configuration file. Overridden by \fB\-\-config\fR option.
+.TP
+.B NO_COLOR
+When set (to any value), disables colored output.
+.SH EXAMPLES
+Submit a successful job status:
+.RS
+.nf
+statdash-cli submit -g backups -j database -s success -m "Completed in 5m"
+.fi
+.RE
+.PP
+Check system health:
+.RS
+.nf
+statdash-cli health
+.fi
+.RE
+.PP
+List all groups:
+.RS
+.nf
+statdash-cli groups
+.fi
+.RE
+.PP
+List jobs in a specific group:
+.RS
+.nf
+statdash-cli jobs backups
+.fi
+.RE
+.PP
+Use in a cron job with error reporting:
+.RS
+.nf
+#!/bin/bash
+statdash-cli submit -g backups -j database -s progress
+pg_dump mydb > /backups/mydb.sql
+if [ $? -eq 0 ]; then
+    statdash-cli submit -g backups -j database -s success
+else
+    statdash-cli submit -g backups -j database -s error -m "Backup failed"
+fi
+.fi
+.RE
+.PP
+Use JSON output for scripting:
+.RS
+.nf
+statdash-cli --json health | jq '.status'
+.fi
+.RE
+.SH SEE ALSO
+.BR cron (8),
+.BR systemd.timer (5)
+.PP
+Project homepage: https://github.com/statdash/statdash-cli
+.SH AUTHOR
+StatDash CLI was created by Sean.
+.SH LICENSE
+CC0-1.0 (Public Domain Dedication)
