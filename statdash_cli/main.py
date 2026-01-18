@@ -127,12 +127,9 @@ def health(ctx: Context, json_output: bool) -> None:
         client = ctx.get_client()
         data = client.get_health()
 
-        formatter: OutputFormatter
-        if json_output or ctx.json_output:
-            formatter = JsonFormatter()
-        else:
-            formatter = ctx.get_formatter()
-
+        formatter: OutputFormatter = (
+            JsonFormatter() if json_output or ctx.json_output else ctx.get_formatter()
+        )
         ctx.output(formatter.health(data))
 
         # Exit with code 1 if unhealthy
@@ -188,11 +185,7 @@ def submit(
         data = client.submit_status(group, job, status, message)
 
         if not ctx.quiet:
-            formatter: OutputFormatter
-            if ctx.json_output:
-                formatter = JsonFormatter()
-            else:
-                formatter = ctx.get_formatter()
+            formatter: OutputFormatter = JsonFormatter() if ctx.json_output else ctx.get_formatter()
             ctx.output(formatter.submit_success(data))
 
     except StatDashError as e:
@@ -217,12 +210,9 @@ def groups(ctx: Context, json_output: bool) -> None:
         client = ctx.get_client()
         data = client.get_groups()
 
-        formatter: OutputFormatter
-        if json_output or ctx.json_output:
-            formatter = JsonFormatter()
-        else:
-            formatter = ctx.get_formatter()
-
+        formatter: OutputFormatter = (
+            JsonFormatter() if json_output or ctx.json_output else ctx.get_formatter()
+        )
         ctx.output(formatter.groups(data))
 
     except StatDashError as e:
@@ -241,12 +231,9 @@ def jobs(ctx: Context, group_name: str, json_output: bool) -> None:
         client = ctx.get_client()
         data = client.get_jobs(group_name)
 
-        formatter: OutputFormatter
-        if json_output or ctx.json_output:
-            formatter = JsonFormatter()
-        else:
-            formatter = ctx.get_formatter()
-
+        formatter: OutputFormatter = (
+            JsonFormatter() if json_output or ctx.json_output else ctx.get_formatter()
+        )
         ctx.output(formatter.jobs(data))
 
     except NotFoundError:
@@ -287,12 +274,9 @@ def config_cmd(
         else:
             data = client.get_config()
 
-        formatter: OutputFormatter
-        if json_output or ctx.json_output:
-            formatter = JsonFormatter()
-        else:
-            formatter = ctx.get_formatter()
-
+        formatter: OutputFormatter = (
+            JsonFormatter() if json_output or ctx.json_output else ctx.get_formatter()
+        )
         ctx.output(formatter.config(data))
 
     except StatDashError as e:
@@ -344,12 +328,9 @@ def group_config_cmd(
         else:
             data = client.get_group_config(group_name)
 
-        formatter: OutputFormatter
-        if json_output or ctx.json_output:
-            formatter = JsonFormatter()
-        else:
-            formatter = ctx.get_formatter()
-
+        formatter: OutputFormatter = (
+            JsonFormatter() if json_output or ctx.json_output else ctx.get_formatter()
+        )
         ctx.output(formatter.group_config(data))
 
     except NotFoundError:

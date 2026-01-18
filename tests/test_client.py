@@ -121,7 +121,9 @@ class TestApiClientSubmit:
         result = client.submit_status("group", "job", "progress")
 
         # Verify request body doesn't have message key
-        assert "message" not in responses.calls[0].request.body.decode()
+        body = responses.calls[0].request.body
+        body_str = body.decode() if isinstance(body, bytes) else str(body)
+        assert "message" not in body_str
         assert result["success"] is True
 
     @responses.activate

@@ -10,7 +10,9 @@ import socket
 import sys
 import threading
 import time
+from collections.abc import Generator
 from pathlib import Path
+from typing import Any, cast
 
 import pytest
 import responses
@@ -29,14 +31,15 @@ def _find_free_port() -> int:
     """Find a free port to run the test server on."""
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind(("127.0.0.1", 0))
-        return s.getsockname()[1]
+        port: int = cast(int, s.getsockname()[1])
+        return port
 
 
 # AIDEV-NOTE: Skip integration tests if backend is not available
 try:
-    from app import create_app
-    from config import TestConfig
-    from extensions import db
+    from app import create_app  # type: ignore[import-not-found]
+    from config import TestConfig  # type: ignore[import-not-found]
+    from extensions import db  # type: ignore[import-not-found]
 
     BACKEND_AVAILABLE = True
 except ImportError:
@@ -44,7 +47,7 @@ except ImportError:
 
 
 @pytest.fixture
-def integration_server():
+def integration_server() -> Generator[tuple[str, Any], None, None]:
     """Start a Flask test server for integration testing.
 
     Returns:
@@ -72,7 +75,7 @@ def integration_server():
     # Start server in a thread
     # AIDEV-NOTE: Use werkzeug's run_simple for a lightweight test server
     # instead of the full socketio server which requires eventlet
-    from werkzeug.serving import make_server
+    from werkzeug.serving import make_server  # type: ignore[import-not-found]
 
     server = make_server("127.0.0.1", port, app)
     thread = threading.Thread(target=server.serve_forever)

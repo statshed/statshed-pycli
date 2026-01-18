@@ -367,19 +367,19 @@ Final polish and release preparation.
 
 #### Code Quality
 
-- [ ] Run ruff format on all files
-- [ ] Run ruff check and fix all issues
-- [ ] Run mypy and fix all type errors
-- [ ] Review and update AIDEV-NOTE comments
-- [ ] Remove any dead code or unused imports
+- [X] Run ruff format on all files
+- [X] Run ruff check and fix all issues
+- [X] Run mypy and fix all type errors
+- [X] Review and update AIDEV-NOTE comments
+- [X] Remove any dead code or unused imports
 
 #### Release Preparation
 
-- [ ] Update version number in `pyproject.toml`
-- [ ] Verify all dependencies are correctly specified
-- [ ] Test installation from clean environment
-- [ ] Test with Python 3.10, 3.11, 3.12, 3.13
-- [ ] Create release notes
+- [X] Update version number in `pyproject.toml`
+- [X] Verify all dependencies are correctly specified
+- [X] Test installation from clean environment
+- [X] Test with Python 3.10, 3.11, 3.12, 3.13
+- [X] Create release notes
 
 ---
 
