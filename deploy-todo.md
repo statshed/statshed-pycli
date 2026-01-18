@@ -153,22 +153,22 @@ a `uv.lock` file committed to the repository. The lockfile already exists.
 
 ### 3.1 Build Configuration
 
-- [ ] Verify hatchling builds correctly: `uv build`
-- [ ] Inspect generated wheel for correct files
-- [ ] Inspect generated sdist for correct files:
-  - [ ] Verify man page is included (after Phase 2.5)
-  - [ ] Run: `tar -tzf dist/statdash_cli-*.tar.gz | grep statdash-cli.1`
-- [ ] Ensure `__version__` in `__init__.py` matches pyproject.toml
+- [x] Verify hatchling builds correctly: `uv build` ✓
+- [x] Inspect generated wheel for correct files ✓
+- [x] Inspect generated sdist for correct files: ✓
+  - [x] Verify man page is included (after Phase 2.5) ✓
+  - [x] Run: `tar -tzf dist/statdash_cli-*.tar.gz | grep statdash-cli.1` ✓
+- [x] Ensure `__version__` in `__init__.py` matches pyproject.toml ✓
 
 ### 3.2 Version Management Strategy
 
-- [ ] Document versioning scheme (Semantic Versioning)
-- [ ] Decide single source of truth for version:
-  - [ ] Option A: `__init__.py` with `__version__`
-  - [ ] Option B: `pyproject.toml` with dynamic version
-  - [ ] Option C: Git tags with hatch-vcs
-- [ ] Create version bump script or document manual process
-- [ ] Ensure version is updated before each release
+- [x] Document versioning scheme (Semantic Versioning) ✓ (see docs/releasing.md)
+- [x] Decide single source of truth for version: ✓
+  - [x] Option A: Both `pyproject.toml` and `__init__.py` (manual sync) ✓
+  - [ ] ~~Option B: `pyproject.toml` with dynamic version~~
+  - [ ] ~~Option C: Git tags with hatch-vcs~~
+- [x] Create version bump script or document manual process ✓ (see docs/releasing.md)
+- [x] Ensure version is updated before each release ✓ (documented in releasing.md)
 
 **Version Mapping Across Systems:**
 
@@ -181,15 +181,15 @@ a `uv.lock` file committed to the repository. The lockfile already exists.
 
 ### 3.3 Package Testing Before Release
 
-- [ ] Create script `scripts/test-package.sh`:
-  - [ ] Build package locally
-  - [ ] Install in fresh virtual environment
-  - [ ] Run smoke tests against installed package
-  - [ ] Verify entry point works: `statdash-cli --help`
-  - [ ] Verify sub-commands work: `statdash-cli health --help`
-- [ ] Test installation with `pip install .`
+- [x] Create script `scripts/test-package.sh`: ✓
+  - [x] Build package locally ✓
+  - [x] Install in fresh virtual environment ✓
+  - [x] Run smoke tests against installed package ✓
+  - [x] Verify entry point works: `statdash-cli --help` ✓
+  - [x] Verify sub-commands work: `statdash-cli health --help` ✓
+- [x] Test installation with `pip install .` ✓ (via test-package.sh)
 - [ ] Test installation with `pipx install .`
-- [ ] Test optional dependencies: `pip install .[rich]`
+- [x] Test optional dependencies: `pip install .[rich]` ✓ (via test-package.sh)
 
 ### 3.4 PyPI Account Setup
 
@@ -296,13 +296,13 @@ a `uv.lock` file committed to the repository. The lockfile already exists.
 
 ### 5.2 Deployment Documentation
 
-- [ ] Create `docs/releasing.md` with:
-  - [ ] Version bump procedure
-  - [ ] Changelog update process
-  - [ ] Creating a GitHub release
-  - [ ] Verifying PyPI publication
-  - [ ] Verifying Debian package builds
-  - [ ] Rollback procedures
+- [x] Create `docs/releasing.md` with: ✓
+  - [x] Version bump procedure ✓
+  - [x] Changelog update process ✓
+  - [x] Creating a GitHub release ✓
+  - [x] Verifying PyPI publication ✓
+  - [x] Verifying Debian package builds ✓
+  - [x] Rollback procedures ✓
 
 ### 5.3 Man Pages
 
