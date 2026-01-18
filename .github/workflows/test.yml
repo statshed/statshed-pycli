@@ -1,4 +1,5 @@
 # .github/workflows/test.yml
+# AIDEV-NOTE: Actions pinned to SHAs per security best practices
 name: Tests
 
 on:
@@ -19,10 +20,10 @@ jobs:
         python-version: ["3.10", "3.11", "3.12", "3.13"]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a  # v4
         with:
           # AIDEV-NOTE: Pin to specific version to avoid supply-chain drift
           version: "0.5.x"
