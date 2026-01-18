@@ -300,27 +300,27 @@ Enhance user experience with optional rich terminal output and shell completion.
 
 #### Rich Terminal Output
 
-- [ ] Add Rich as optional dependency (`pip install statdash-cli[rich]`)
-- [ ] Create `output.py` module with output abstraction
-- [ ] Implement `PlainFormatter` class for basic output
-- [ ] Implement `RichFormatter` class for styled output
-- [ ] Auto-detect Rich availability and TTY status
-- [ ] Add `--no-color` global option
-- [ ] Add `color` config file option (true/false/auto)
-- [ ] Style health status with colors (green=healthy, red=error, yellow=progress)
-- [ ] Format group/job listings as styled tables
-- [ ] Style error messages with red highlighting
+- [X] Add Rich as optional dependency (`pip install statdash-cli[rich]`)
+- [X] Create `output.py` module with output abstraction
+- [X] Implement `PlainFormatter` class for basic output
+- [X] Implement `RichFormatter` class for styled output
+- [X] Auto-detect Rich availability and TTY status
+- [X] Add `--no-color` global option
+- [X] Add `color` config file option (true/false/auto)
+- [X] Style health status with colors (green=healthy, red=error, yellow=progress)
+- [X] Format group/job listings as styled tables
+- [X] Style error messages with red highlighting
 
 #### Shell Completion
 
-- [ ] Implement `completion` command
-- [ ] Generate Bash completion script
-- [ ] Generate Zsh completion script
-- [ ] Generate Fish completion script
-- [ ] Add dynamic completion for group names (queries API)
-- [ ] Add dynamic completion for job names within groups
-- [ ] Add completion for status values (success, error, progress)
-- [ ] Document completion installation in README
+- [X] Implement `completion` command
+- [X] Generate Bash completion script
+- [X] Generate Zsh completion script
+- [X] Generate Fish completion script
+- [X] Add dynamic completion for group names (queries API)
+- [X] Add dynamic completion for job names within groups
+- [X] Add completion for status values (success, error, progress)
+- [X] Document completion installation in README
 
 ---
 

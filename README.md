@@ -105,15 +105,63 @@ submit:
 
 ## Shell Completion
 
+StatDash CLI provides shell completion for Bash, Zsh, and Fish. The completion includes:
+
+- Command and option names
+- Dynamic group name completion (queries the API)
+- Dynamic job name completion (when group is specified)
+- Status value completion (`success`, `error`, `progress`)
+
+### Installation
+
+**Bash:**
 ```bash
-# Bash
+# Create the completions directory if it doesn't exist
+mkdir -p ~/.local/share/bash-completion/completions
+
+# Generate and install the completion script
 statdash-cli completion bash > ~/.local/share/bash-completion/completions/statdash-cli
 
-# Zsh
+# Reload your shell or source the file
+source ~/.local/share/bash-completion/completions/statdash-cli
+```
+
+**Zsh:**
+```bash
+# Create the completions directory if it doesn't exist
+mkdir -p ~/.zfunc
+
+# Add to .zshrc if not already present:
+# fpath+=~/.zfunc
+# autoload -Uz compinit && compinit
+
+# Generate and install the completion script
 statdash-cli completion zsh > ~/.zfunc/_statdash-cli
 
-# Fish
+# Reload completions
+autoload -Uz compinit && compinit
+```
+
+**Fish:**
+```bash
+# Create the completions directory if it doesn't exist
+mkdir -p ~/.config/fish/completions
+
+# Generate and install the completion script
 statdash-cli completion fish > ~/.config/fish/completions/statdash-cli.fish
+```
+
+### Dynamic Completion
+
+The shell completion queries the StatDash API to provide contextual suggestions:
+
+- When completing group names (`--group` or group arguments), available groups are fetched from the server
+- When completing job names (`--job`), jobs from the specified group are fetched
+- If the server is unavailable, completion falls back to basic suggestions
+
+Set `STATDASH_URL` environment variable if your server is not at the default location:
+```bash
+export STATDASH_URL=https://statdash.example.com
 ```
 
 ## Development

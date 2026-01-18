@@ -9,7 +9,12 @@ import sys
 import click
 
 from statdash_cli.client import ApiClient
-from statdash_cli.completion import get_completion_script
+from statdash_cli.completion import (
+    complete_group_names,
+    complete_job_names,
+    complete_status_values,
+    get_completion_script,
+)
 from statdash_cli.config import Config
 from statdash_cli.errors import (
     ConfigError,
@@ -141,14 +146,17 @@ def health(ctx: Context, json_output: bool) -> None:
 
 
 @cli.command()
-@click.option("--group", "-g", required=True, help="Group name")
-@click.option("--job", "-j", required=True, help="Job name")
+@click.option(
+    "--group", "-g", required=True, help="Group name", shell_complete=complete_group_names
+)
+@click.option("--job", "-j", required=True, help="Job name", shell_complete=complete_job_names)
 @click.option(
     "--status",
     "-s",
     required=True,
     type=click.Choice(["success", "error", "progress"]),
     help="Status value",
+    shell_complete=complete_status_values,
 )
 @click.option("--message", "-m", help="Optional status message")
 @click.option(
@@ -224,7 +232,7 @@ def groups(ctx: Context, json_output: bool) -> None:
 
 
 @cli.command()
-@click.argument("group_name")
+@click.argument("group_name", shell_complete=complete_group_names)
 @click.option("--json", "json_output", is_flag=True, help="Output as JSON")
 @pass_context
 def jobs(ctx: Context, group_name: str, json_output: bool) -> None:
@@ -294,7 +302,7 @@ def config_cmd(
 
 
 @cli.command("group-config")
-@click.argument("group_name")
+@click.argument("group_name", shell_complete=complete_group_names)
 @click.option("--progress-timeout", "-p", type=int, help="Progress timeout override (minutes)")
 @click.option("--staleness-timeout", "-s", type=int, help="Staleness timeout override (hours)")
 @click.option("--reset-progress-timeout", is_flag=True, help="Reset to global default")
