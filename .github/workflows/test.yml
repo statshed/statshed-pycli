@@ -7,6 +7,10 @@ on:
   pull_request:
     branches: [main, master]
 
+# AIDEV-NOTE: Explicit minimal permissions reduce supply-chain attack surface
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -20,7 +24,8 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v4
         with:
-          version: "latest"
+          # AIDEV-NOTE: Pin to specific version to avoid supply-chain drift
+          version: "0.5.x"
 
       - name: Set up Python ${{ matrix.python-version }}
         run: uv python install ${{ matrix.python-version }}
