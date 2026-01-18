@@ -260,9 +260,12 @@ class TestGroupConfigIntegration:
 class TestErrorScenarios:
     """Test error scenarios without backend."""
 
-    @responses.activate
     def test_connection_refused(self, runner: CliRunner) -> None:
-        """Test connection refused error (no mock registered)."""
+        """Test connection refused error (real socket error).
+
+        AIDEV-NOTE: No @responses.activate here - we want to hit a real
+        non-existent port to test actual connection error handling.
+        """
         result = runner.invoke(cli, ["-u", "http://localhost:59999", "health"])
         assert result.exit_code == ExitCode.ERROR_CONNECTION
         assert "Error:" in result.output
