@@ -5,6 +5,7 @@ Errors are converted to StatDash exceptions with appropriate exit codes.
 Retry logic handles transient failures (connection errors, timeouts).
 """
 
+import random
 import time
 from typing import Any
 from urllib.parse import quote, urljoin
@@ -83,9 +84,11 @@ class ApiClient:
         last_error: ConnectionError | TimeoutError | None = None
         response: requests.Response | None = None
 
-        # AIDEV-NOTE: Retry logic only applies to transient failures (connection
-        # errors, timeouts). HTTP errors (4xx, 5xx) are not retried as they
-        # indicate the request was received but failed.
+        # AIDEV-NOTE: Retry logic applies to transient failures (connection errors,
+        # timeouts). HTTP errors (4xx, 5xx) are not retried as they indicate the
+        # request was received but failed. POST/PUT retries are safe because the
+        # /status endpoint uses upsert semantics (idempotent).
+        last_exception: Exception | None = None
         for attempt in range(self.retries + 1):
             try:
                 response = requests.request(
@@ -97,21 +100,25 @@ class ApiClient:
                 # Success - break out of retry loop
                 break
             except requests.exceptions.ConnectionError as e:
+                last_exception = e
                 last_error = ConnectionError(f"Could not connect to {self.base_url}: {e}")
-            except requests.exceptions.Timeout:
+            except requests.exceptions.Timeout as e:
+                last_exception = e
                 last_error = TimeoutError(f"Request to {url} timed out after {self.timeout}s")
             except requests.exceptions.RequestException as e:
                 # Non-transient request error, don't retry
                 raise ApiError(f"Request failed: {e}") from e
 
-            # If we have more retries, wait before trying again
+            # If we have more retries, wait before trying again with jitter
             if attempt < self.retries:
-                delay = self.retry_delay * (2**attempt)  # Exponential backoff
-                time.sleep(delay)
+                # Exponential backoff with jitter to avoid thundering herd
+                base_delay = self.retry_delay * (2**attempt)
+                jitter = random.uniform(0, self.retry_delay)
+                time.sleep(base_delay + jitter)
         else:
-            # All retries exhausted, raise the last error
+            # All retries exhausted, raise the last error with exception context
             if last_error is not None:
-                raise last_error
+                raise last_error from last_exception
 
         # At this point, response must be set (either we got a response or raised)
         assert response is not None
