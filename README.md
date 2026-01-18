@@ -1,5 +1,7 @@
 # StatDash CLI
 
+[![Tests](https://github.com/statdash/statdash-cli/actions/workflows/test.yml/badge.svg)](https://github.com/statdash/statdash-cli/actions/workflows/test.yml)
+
 Command-line interface for the StatDash status dashboard.
 
 ## Installation
@@ -347,4 +349,4 @@ mypy statdash_cli
 
 ## License
 
-MIT
+CC0-1.0 (Public Domain Dedication)
