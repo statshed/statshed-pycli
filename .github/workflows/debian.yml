@@ -1,0 +1,112 @@
+# .github/workflows/debian.yml
+# AIDEV-NOTE: Debian package build workflow.
+# - Builds .deb packages in Debian/Ubuntu containers
+# - Runs lintian for package quality checks (errors are fatal)
+# - Runs autopkgtest for functional verification
+# - Uploads artifacts to GitHub Release on release events
+name: Build Debian Packages
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  build-deb:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - distro: ubuntu
+            version: noble
+          - distro: debian
+            version: trixie
+
+    container:
+      image: ${{ matrix.distro }}:${{ matrix.version }}
+
+    steps:
+      - name: Install git and build dependencies
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            git \
+            ca-certificates \
+            build-essential \
+            fakeroot \
+            devscripts \
+            debhelper \
+            dh-python \
+            python3-all \
+            python3-hatchling \
+            pybuild-plugin-pyproject \
+            lintian
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name || github.ref }}
+          fetch-depth: 0
+
+      # AIDEV-NOTE: git security fix - actions/checkout creates the repo as
+      # the runner user but the container runs as root, causing git to reject
+      # operations due to dubious ownership. Mark the directory as safe.
+      - name: Fix git ownership
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      - name: Build package
+        run: DEB_BUILD_OPTIONS=nocheck dpkg-buildpackage -us -uc -b
+
+      - name: Run lintian (errors are fatal)
+        run: |
+          lintian --fail-on error ../*.deb
+          echo "::group::Lintian warnings and info (non-fatal)"
+          lintian --display-info ../*.deb || true
+          echo "::endgroup::"
+
+      - name: Install package for testing
+        run: |
+          apt-get install -y ../*.deb
+
+      - name: Run autopkgtest
+        run: |
+          apt-get install -y autopkgtest
+          # Run autopkgtest using null virtualization (runs tests directly)
+          autopkgtest ../*.deb -- null
+
+      - name: Rename artifact with distro suffix
+        run: |
+          cd ..
+          for deb in *.deb; do
+            base="${deb%.deb}"
+            mv "$deb" "${base}_${{ matrix.distro }}-${{ matrix.version }}.deb"
+          done
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: deb-${{ matrix.distro }}-${{ matrix.version }}
+          path: ../*_${{ matrix.distro }}-${{ matrix.version }}.deb
+
+  upload-release:
+    needs: build-deb
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release'
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: ''
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: Upload to release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for deb in artifacts/*/*.deb; do
+            gh release upload "${{ github.event.release.tag_name }}" "$deb" --clobber --repo "${{ github.repository }}"
+          done
