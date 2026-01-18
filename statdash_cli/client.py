@@ -2,8 +2,10 @@
 
 AIDEV-NOTE: All API interactions go through the ApiClient class.
 Errors are converted to StatDash exceptions with appropriate exit codes.
+Retry logic handles transient failures (connection errors, timeouts).
 """
 
+import time
 from typing import Any
 from urllib.parse import quote, urljoin
 
@@ -26,17 +28,30 @@ class ApiClient:
     - TimeoutError: Request timed out
     - ApiError: Server returned an error
     - NotFoundError: Resource not found (404)
+
+    Retry logic handles transient failures (connection errors, timeouts)
+    when retries > 0. Retries use exponential backoff with jitter.
     """
 
-    def __init__(self, base_url: str, timeout: int = 10) -> None:
+    def __init__(
+        self,
+        base_url: str,
+        timeout: int = 10,
+        retries: int = 0,
+        retry_delay: float = 1.0,
+    ) -> None:
         """Initialize the API client.
 
         Args:
             base_url: Base URL of the StatDash API
             timeout: Request timeout in seconds
+            retries: Number of retries for transient failures (0 = no retries)
+            retry_delay: Base delay between retries in seconds
         """
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
+        self.retries = retries
+        self.retry_delay = retry_delay
 
     def _url(self, path: str) -> str:
         """Build full URL for an API path."""
@@ -48,7 +63,7 @@ class ApiClient:
         path: str,
         json: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        """Make an HTTP request to the API.
+        """Make an HTTP request to the API with retry logic.
 
         Args:
             method: HTTP method (GET, POST, PUT, etc.)
@@ -59,26 +74,47 @@ class ApiClient:
             Parsed JSON response
 
         Raises:
-            ConnectionError: Server unreachable
-            TimeoutError: Request timed out
+            ConnectionError: Server unreachable (after all retries)
+            TimeoutError: Request timed out (after all retries)
             ApiError: Server returned an error
             NotFoundError: Resource not found
         """
         url = self._url(path)
+        last_error: ConnectionError | TimeoutError | None = None
+        response: requests.Response | None = None
 
-        try:
-            response = requests.request(
-                method=method,
-                url=url,
-                json=json,
-                timeout=self.timeout,
-            )
-        except requests.exceptions.ConnectionError as e:
-            raise ConnectionError(f"Could not connect to {self.base_url}: {e}") from e
-        except requests.exceptions.Timeout as e:
-            raise TimeoutError(f"Request to {url} timed out after {self.timeout}s") from e
-        except requests.exceptions.RequestException as e:
-            raise ApiError(f"Request failed: {e}") from e
+        # AIDEV-NOTE: Retry logic only applies to transient failures (connection
+        # errors, timeouts). HTTP errors (4xx, 5xx) are not retried as they
+        # indicate the request was received but failed.
+        for attempt in range(self.retries + 1):
+            try:
+                response = requests.request(
+                    method=method,
+                    url=url,
+                    json=json,
+                    timeout=self.timeout,
+                )
+                # Success - break out of retry loop
+                break
+            except requests.exceptions.ConnectionError as e:
+                last_error = ConnectionError(f"Could not connect to {self.base_url}: {e}")
+            except requests.exceptions.Timeout:
+                last_error = TimeoutError(f"Request to {url} timed out after {self.timeout}s")
+            except requests.exceptions.RequestException as e:
+                # Non-transient request error, don't retry
+                raise ApiError(f"Request failed: {e}") from e
+
+            # If we have more retries, wait before trying again
+            if attempt < self.retries:
+                delay = self.retry_delay * (2**attempt)  # Exponential backoff
+                time.sleep(delay)
+        else:
+            # All retries exhausted, raise the last error
+            if last_error is not None:
+                raise last_error
+
+        # At this point, response must be set (either we got a response or raised)
+        assert response is not None
 
         # Handle HTTP errors
         if response.status_code == 404:

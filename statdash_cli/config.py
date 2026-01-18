@@ -21,6 +21,8 @@ DEFAULT_URL = "http://localhost:5000"
 DEFAULT_OUTPUT_FORMAT = "table"
 DEFAULT_COLOR = "auto"
 DEFAULT_TIMEOUT = 10
+DEFAULT_RETRIES = 0
+DEFAULT_RETRY_DELAY = 1.0
 
 # Configuration file search paths (in order of precedence)
 CONFIG_SEARCH_PATHS = [
@@ -51,6 +53,8 @@ class Config:
     output_format: str = DEFAULT_OUTPUT_FORMAT
     color: str = DEFAULT_COLOR
     timeout: int = DEFAULT_TIMEOUT
+    retries: int = DEFAULT_RETRIES
+    retry_delay: float = DEFAULT_RETRY_DELAY
     submit: SubmitConfig = field(default_factory=SubmitConfig)
     config_path: Path | None = None
 
@@ -214,6 +218,20 @@ def _parse_config(data: dict[str, Any], path: Path) -> "Config":
         if not isinstance(timeout, int) or timeout <= 0:
             raise ConfigError(f"Config 'timeout' must be a positive integer in {path}")
         config.timeout = timeout
+
+    # Parse retries
+    if "retries" in data:
+        retries = data["retries"]
+        if not isinstance(retries, int) or retries < 0:
+            raise ConfigError(f"Config 'retries' must be a non-negative integer in {path}")
+        config.retries = retries
+
+    # Parse retry_delay
+    if "retry_delay" in data:
+        retry_delay = data["retry_delay"]
+        if not isinstance(retry_delay, (int, float)) or retry_delay < 0:
+            raise ConfigError(f"Config 'retry_delay' must be a non-negative number in {path}")
+        config.retry_delay = float(retry_delay)
 
     # Parse submit section
     if "submit" in data:

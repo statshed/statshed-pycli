@@ -1,6 +1,8 @@
 """Tests for CLI commands."""
 
 import json
+from pathlib import Path
+from unittest import mock
 
 import pytest
 import requests
@@ -183,6 +185,36 @@ class TestSubmitCommand:
         result = runner.invoke(cli, ["submit", "-g", "test", "-j", "test", "-s", "invalid"])
         assert result.exit_code != 0
         assert "Invalid value" in result.output
+
+    @responses.activate
+    def test_submit_syslog_on_error(
+        self, runner: CliRunner, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test that syslog is used when configured and error occurs."""
+        # Create config file with syslog enabled
+        config_file = tmp_path / "config.yaml"
+        config_file.write_text("""
+url: http://localhost:5000
+submit:
+  syslog: true
+  syslog_facility: local0
+""")
+        monkeypatch.setenv("STATDASH_CONFIG", str(config_file))
+
+        responses.add(
+            responses.POST,
+            "http://localhost:5000/status",
+            body=requests.exceptions.ConnectionError("Connection refused"),
+        )
+
+        with mock.patch("statdash_cli.logging.log_to_syslog") as mock_syslog:
+            result = runner.invoke(cli, ["submit", "-g", "test", "-j", "test", "-s", "success"])
+            # Lenient mode should exit 0
+            assert result.exit_code == 0
+            # Syslog should have been called
+            mock_syslog.assert_called_once()
+            # No warning on stderr when syslog is enabled
+            assert "Warning:" not in result.output
 
 
 class TestGroupsCommand:

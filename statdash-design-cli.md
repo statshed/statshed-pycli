@@ -268,29 +268,29 @@ Add group-level configuration command and implement the dual error handling mode
 
 #### Group Configuration Command
 
-- [ ] Add `get_group_config()` method to `ApiClient`
-- [ ] Add `update_group_config()` method to `ApiClient`
-- [ ] Implement `group-config` command with view mode
-- [ ] Implement `group-config` command with update mode
-- [ ] Add `--reset-progress-timeout` and `--reset-staleness-timeout` options
-- [ ] Add JSON output support for `group-config`
+- [X] Add `get_group_config()` method to `ApiClient`
+- [X] Add `update_group_config()` method to `ApiClient`
+- [X] Implement `group-config` command with view mode
+- [X] Implement `group-config` command with update mode
+- [X] Add `--reset-progress-timeout` and `--reset-staleness-timeout` options
+- [X] Add JSON output support for `group-config`
 
 #### Submit Command Error Modes
 
-- [ ] Add `--strict` flag to submit command
-- [ ] Implement lenient mode (default): catch errors, log, exit 0
-- [ ] Implement strict mode: propagate errors with exit codes
-- [ ] Add `submit.strict` config file option
-- [ ] Add syslog support for error logging
-- [ ] Add `submit.syslog` and `submit.syslog_facility` config options
-- [ ] Ensure other commands (health, groups, jobs, config) always use strict error handling
+- [X] Add `--strict` flag to submit command
+- [X] Implement lenient mode (default): catch errors, log, exit 0
+- [X] Implement strict mode: propagate errors with exit codes
+- [X] Add `submit.strict` config file option
+- [X] Add syslog support for error logging
+- [X] Add `submit.syslog` and `submit.syslog_facility` config options
+- [X] Ensure other commands (health, groups, jobs, config) always use strict error handling
 
 #### API Client Improvements
 
-- [ ] Add configurable request timeout
-- [ ] Add `timeout` config file option
-- [ ] Improve error messages with more context
-- [ ] Add retry logic for transient failures (optional, configurable)
+- [X] Add configurable request timeout
+- [X] Add `timeout` config file option
+- [X] Improve error messages with more context
+- [X] Add retry logic for transient failures (optional, configurable)
 
 ---
 

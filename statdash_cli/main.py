@@ -18,6 +18,7 @@ from statdash_cli.errors import (
     StatDashError,
     get_exit_code,
 )
+from statdash_cli.logging import log_submit_error
 from statdash_cli.output import JsonFormatter, OutputFormatter, get_formatter
 
 
@@ -34,7 +35,12 @@ class Context:
         """Get or create the API client."""
         if self.client is None:
             assert self.config is not None
-            self.client = ApiClient(self.config.url, self.config.timeout)
+            self.client = ApiClient(
+                self.config.url,
+                timeout=self.config.timeout,
+                retries=self.config.retries,
+                retry_delay=self.config.retry_delay,
+            )
         return self.client
 
     def get_formatter(self) -> OutputFormatter:
@@ -188,8 +194,9 @@ def submit(
             sys.exit(get_exit_code(e))
         else:
             # Lenient mode: log error but exit 0
-            # AIDEV-NOTE: Syslog support will be added in Phase 2
-            if not ctx.quiet:
+            # Log to syslog if configured, otherwise output warning to stderr
+            log_submit_error(e, ctx.config.submit)
+            if not ctx.quiet and not ctx.config.submit.syslog:
                 click.echo(f"Warning: {e}", err=True)
 
 

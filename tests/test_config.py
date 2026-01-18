@@ -25,6 +25,8 @@ class TestConfigDefaults:
         assert config.output_format == "table"
         assert config.color == "auto"
         assert config.timeout == 10
+        assert config.retries == 0
+        assert config.retry_delay == 1.0
         assert config.submit.syslog is False
         assert config.submit.strict is False
 
@@ -170,6 +172,46 @@ submit:
 
         config = _load_config_file(config_file)
         assert config.color == "never"
+
+    def test_retries_config(self, tmp_path: Path) -> None:
+        """Test retries configuration."""
+        config_file = tmp_path / "config.yaml"
+        config_file.write_text("retries: 3")
+
+        config = _load_config_file(config_file)
+        assert config.retries == 3
+
+    def test_retry_delay_config(self, tmp_path: Path) -> None:
+        """Test retry_delay configuration."""
+        config_file = tmp_path / "config.yaml"
+        config_file.write_text("retry_delay: 2.5")
+
+        config = _load_config_file(config_file)
+        assert config.retry_delay == 2.5
+
+    def test_retry_delay_int(self, tmp_path: Path) -> None:
+        """Test retry_delay as integer."""
+        config_file = tmp_path / "config.yaml"
+        config_file.write_text("retry_delay: 2")
+
+        config = _load_config_file(config_file)
+        assert config.retry_delay == 2.0
+
+    def test_invalid_retries_negative(self, tmp_path: Path) -> None:
+        """Test invalid negative retries value."""
+        config_file = tmp_path / "config.yaml"
+        config_file.write_text("retries: -1")
+
+        with pytest.raises(ConfigError, match="must be a non-negative integer"):
+            _load_config_file(config_file)
+
+    def test_invalid_retry_delay_negative(self, tmp_path: Path) -> None:
+        """Test invalid negative retry_delay value."""
+        config_file = tmp_path / "config.yaml"
+        config_file.write_text("retry_delay: -0.5")
+
+        with pytest.raises(ConfigError, match="must be a non-negative number"):
+            _load_config_file(config_file)
 
 
 class TestConfigFromSources:
