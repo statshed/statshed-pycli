@@ -311,6 +311,7 @@ class RichFormatter(OutputFormatter):
 
     def groups(self, data: dict[str, Any]) -> str:
         """Format groups list with styled table."""
+        from rich.markup import escape
         from rich.table import Table as RichTable
         from rich.text import Text as RichText
 
@@ -343,13 +344,15 @@ class RichFormatter(OutputFormatter):
 
             summary = ", ".join(summary_parts) if summary_parts else "[dim]—[/dim]"
 
-            table.add_row(status_icon, group["name"], str(job_count), summary)
+            # AIDEV-NOTE: Escape user-provided group names to prevent Rich markup injection
+            table.add_row(status_icon, escape(group["name"]), str(job_count), summary)
 
         self._console.print(table)
         return self._get_output()
 
     def jobs(self, data: dict[str, Any]) -> str:
         """Format jobs list with styled table."""
+        from rich.markup import escape
         from rich.panel import Panel as RichPanel
         from rich.table import Table as RichTable
         from rich.text import Text as RichText
@@ -358,19 +361,21 @@ class RichFormatter(OutputFormatter):
         jobs = data.get("jobs", [])
 
         group_name = group.get("name", "unknown")
+        # AIDEV-NOTE: Escape user-provided group names to prevent Rich markup injection
+        safe_group_name = escape(group_name)
 
         if not jobs:
             self._console.print(
                 RichPanel(
                     "[dim]No jobs found.[/dim]",
-                    title=f"Group: {group_name}",
+                    title=f"Group: {safe_group_name}",
                     border_style="cyan",
                 )
             )
             return self._get_output()
 
         table = RichTable(
-            title=f"Jobs in '{group_name}'", show_header=True, header_style="bold cyan"
+            title=f"Jobs in '{safe_group_name}'", show_header=True, header_style="bold cyan"
         )
         table.add_column("Status", justify="center", width=8)
         table.add_column("Job Name", style="bold")
@@ -382,9 +387,11 @@ class RichFormatter(OutputFormatter):
             color = STATUS_COLORS.get(status, "white")
             status_icon = RichText("●", style=color)
 
-            message = job.get("message", "") or "[dim]—[/dim]"
+            # AIDEV-NOTE: Escape user-provided job names and messages to prevent markup injection
+            raw_message = job.get("message", "")
+            message = escape(raw_message) if raw_message else "[dim]—[/dim]"
 
-            table.add_row(status_icon, job["name"], RichText(status, style=color), message)
+            table.add_row(status_icon, escape(job["name"]), RichText(status, style=color), message)
 
         self._console.print(table)
         return self._get_output()
@@ -412,10 +419,13 @@ class RichFormatter(OutputFormatter):
 
     def group_config(self, data: dict[str, Any]) -> str:
         """Format group config output with panel."""
+        from rich.markup import escape
         from rich.panel import Panel as RichPanel
         from rich.table import Table as RichTable
 
         group_name = data.get("group", "unknown")
+        # AIDEV-NOTE: Escape user-provided group names to prevent Rich markup injection
+        safe_group_name = escape(group_name)
 
         table = RichTable(show_header=False, box=None)
         table.add_column("Setting", style="cyan")
@@ -436,7 +446,9 @@ class RichFormatter(OutputFormatter):
         else:
             table.add_row("Staleness Timeout", f"{staleness} hours", "(override)")
 
-        self._console.print(RichPanel(table, title=f"Group: {group_name}", border_style="cyan"))
+        self._console.print(
+            RichPanel(table, title=f"Group: {safe_group_name}", border_style="cyan")
+        )
         return self._get_output()
 
     def submit_success(self, data: dict[str, Any]) -> str:

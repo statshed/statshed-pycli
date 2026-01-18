@@ -107,19 +107,23 @@ class TestCompleteGroupNames:
         completions = complete_group_names(ctx, param, "")
         assert completions == []
 
+    @responses.activate
     def test_returns_empty_on_connection_error(self) -> None:
         """Test that empty list is returned on connection error."""
-        # No mocked response, so connection will fail
+        import requests
+
+        # Mock a connection error
+        responses.add(
+            responses.GET,
+            "http://localhost:5000/api/groups",
+            body=requests.exceptions.ConnectionError("Connection refused"),
+        )
+
         ctx = MagicMock(spec=click.Context)
         param = MagicMock(spec=click.Parameter)
 
-        # Use a URL that won't connect
-        os.environ["STATDASH_URL"] = "http://localhost:59999"
-        try:
-            completions = complete_group_names(ctx, param, "")
-            assert completions == []
-        finally:
-            os.environ.pop("STATDASH_URL", None)
+        completions = complete_group_names(ctx, param, "")
+        assert completions == []
 
     @responses.activate
     def test_uses_env_url(self) -> None:
