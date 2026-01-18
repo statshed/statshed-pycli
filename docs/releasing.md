@@ -211,11 +211,16 @@ PyPI does not allow re-uploading the same version. If a release has critical iss
 If you need to revert code changes:
 
 ```bash
-# Revert the release commit
+# Revert the release commit (preferred - creates a new commit)
 git revert HEAD
 git push origin main
+```
 
-# Or reset if not yet pushed
+**WARNING**: Only use `git reset --hard` if changes are NOT pushed yet. This command
+permanently discards uncommitted changes and can cause data loss:
+
+```bash
+# DANGER: Only if NOT yet pushed - discards all local changes!
 git reset --hard HEAD~1
 ```
 

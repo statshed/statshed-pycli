@@ -54,7 +54,13 @@ uv venv "$TEST_VENV" --quiet
 
 # Install the built wheel
 info "Installing package from wheel..."
-WHEEL=$(ls dist/*.whl | head -1)
+# AIDEV-NOTE: Validate exactly one wheel exists to avoid picking wrong version
+WHEEL_COUNT=$(ls dist/*.whl 2>/dev/null | wc -l)
+if [[ "$WHEEL_COUNT" -ne 1 ]]; then
+    error "Expected exactly 1 wheel in dist/, found $WHEEL_COUNT"
+    exit 1
+fi
+WHEEL=$(ls dist/*.whl)
 VIRTUAL_ENV="$TEST_VENV" uv pip install "$WHEEL" --quiet
 
 # Test basic entry point
@@ -77,10 +83,11 @@ for cmd in submit health groups jobs config group-config completion; do
 done
 
 # Test with rich extra
-info "Testing installation with [rich] extra..."
-VIRTUAL_ENV="$TEST_VENV" uv pip install "${WHEEL}[rich]" --quiet
+# AIDEV-NOTE: pip ignores extras on local wheel paths, so install rich directly
+info "Testing installation with rich dependency..."
+VIRTUAL_ENV="$TEST_VENV" uv pip install rich --quiet
 "$TEST_VENV/bin/statdash-cli" --help > /dev/null
-echo "  ✓ Works with rich extra"
+echo "  ✓ Works with rich installed"
 
 # Test shell completion generation
 info "Testing shell completion generation..."
