@@ -159,7 +159,7 @@ def complete_group_names(
         import requests
 
         url = _get_api_url()
-        response = requests.get(f"{url}/api/groups", timeout=2)
+        response = requests.get(f"{url}/groups", timeout=2)
         response.raise_for_status()
         data = response.json()
 
@@ -212,7 +212,7 @@ def complete_job_names(
 
         url = _get_api_url()
         encoded_group = quote(group_name, safe="")
-        response = requests.get(f"{url}/api/groups/{encoded_group}/jobs", timeout=2)
+        response = requests.get(f"{url}/groups/{encoded_group}/jobs", timeout=2)
         response.raise_for_status()
         data = response.json()
 

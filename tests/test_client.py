@@ -417,3 +417,129 @@ class TestApiClientRetries:
 
         # Only one call made
         assert len(responses.calls) == 1
+
+
+class TestApiClientTimeout:
+    """Test timeout error handling."""
+
+    @responses.activate
+    def test_timeout_error(self) -> None:
+        """Test that timeout errors are raised correctly."""
+        from statdash_cli.errors import TimeoutError as StatDashTimeoutError
+
+        responses.add(
+            responses.GET,
+            "http://localhost:5000/health",
+            body=requests.exceptions.Timeout("Request timed out"),
+        )
+
+        client = ApiClient("http://localhost:5000")
+        with pytest.raises(StatDashTimeoutError, match="timed out"):
+            client.get_health()
+
+    @responses.activate
+    def test_timeout_retry(self) -> None:
+        """Test that timeout errors trigger retries."""
+        # First two calls timeout, third succeeds
+        responses.add(
+            responses.GET,
+            "http://localhost:5000/health",
+            body=requests.exceptions.Timeout("Request timed out"),
+        )
+        responses.add(
+            responses.GET,
+            "http://localhost:5000/health",
+            body=requests.exceptions.Timeout("Request timed out"),
+        )
+        responses.add(
+            responses.GET,
+            "http://localhost:5000/health",
+            json={"status": "healthy"},
+            status=200,
+        )
+
+        client = ApiClient("http://localhost:5000", retries=2, retry_delay=0.01)
+        result = client.get_health()
+
+        assert result["status"] == "healthy"
+        assert len(responses.calls) == 3
+
+    @responses.activate
+    def test_timeout_exhausted(self) -> None:
+        """Test that timeout error is raised after all retries exhausted."""
+        from statdash_cli.errors import TimeoutError as StatDashTimeoutError
+
+        # All calls timeout
+        for _ in range(3):
+            responses.add(
+                responses.GET,
+                "http://localhost:5000/health",
+                body=requests.exceptions.Timeout("Request timed out"),
+            )
+
+        client = ApiClient("http://localhost:5000", retries=2, retry_delay=0.01)
+        with pytest.raises(StatDashTimeoutError, match="timed out"):
+            client.get_health()
+
+        assert len(responses.calls) == 3
+
+
+class TestApiClientUrlEncoding:
+    """Test URL encoding for special characters."""
+
+    @responses.activate
+    def test_get_jobs_with_spaces(self) -> None:
+        """Test getting jobs for group with spaces in name."""
+        responses.add(
+            responses.GET,
+            "http://localhost:5000/groups/my%20group/jobs",
+            json={
+                "group": {"id": 1, "name": "my group"},
+                "jobs": [{"id": 1, "name": "job-1", "status": "success"}],
+            },
+            status=200,
+        )
+
+        client = ApiClient("http://localhost:5000")
+        result = client.get_jobs("my group")
+
+        assert result["group"]["name"] == "my group"
+
+    @responses.activate
+    def test_get_jobs_with_slashes(self) -> None:
+        """Test getting jobs for group with slashes in name."""
+        responses.add(
+            responses.GET,
+            "http://localhost:5000/groups/path%2Fto%2Fgroup/jobs",
+            json={
+                "group": {"id": 1, "name": "path/to/group"},
+                "jobs": [],
+            },
+            status=200,
+        )
+
+        client = ApiClient("http://localhost:5000")
+        result = client.get_jobs("path/to/group")
+
+        assert result["group"]["name"] == "path/to/group"
+
+    @responses.activate
+    def test_get_group_config_with_special_chars(self) -> None:
+        """Test getting group config with special characters."""
+        responses.add(
+            responses.GET,
+            "http://localhost:5000/groups/test%26group/config",
+            json={
+                "group": "test&group",
+                "progress_timeout_minutes": None,
+                "staleness_timeout_hours": None,
+                "effective_progress_timeout_minutes": 5,
+                "effective_staleness_timeout_hours": 24,
+            },
+            status=200,
+        )
+
+        client = ApiClient("http://localhost:5000")
+        result = client.get_group_config("test&group")
+
+        assert result["group"] == "test&group"

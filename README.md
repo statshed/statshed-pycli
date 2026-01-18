@@ -164,6 +164,165 @@ Set `STATDASH_URL` environment variable if your server is not at the default loc
 export STATDASH_URL=https://statdash.example.com
 ```
 
+## Common Use Cases
+
+### CI/CD Pipeline (GitHub Actions)
+
+```yaml
+jobs:
+  build:
+    steps:
+      - name: Report build start
+        run: |
+          statdash-cli submit -g ci-builds -j "${{ github.repository }}" \
+            -s progress -m "Build started: ${{ github.sha }}"
+
+      - name: Build
+        run: make build
+
+      - name: Report build success
+        if: success()
+        run: |
+          statdash-cli submit -g ci-builds -j "${{ github.repository }}" \
+            -s success -m "Build passed: ${{ github.sha }}"
+
+      - name: Report build failure
+        if: failure()
+        run: |
+          statdash-cli submit -g ci-builds -j "${{ github.repository }}" \
+            -s error -m "Build failed: ${{ github.sha }}"
+```
+
+### Cron Job Status Reporting
+
+For safe use with `set -eu` (script exits on error), use the default lenient mode:
+
+```bash
+#!/bin/bash
+set -eu
+
+# Submit commands won't cause script to exit on API errors
+statdash-cli submit -g backups -j database -s progress -m "Starting backup"
+
+# Do the actual backup
+pg_dump mydb > /backups/mydb.sql
+
+# Report success
+statdash-cli submit -g backups -j database -s success -m "Backup completed"
+```
+
+For manual error handling with strict mode:
+
+```bash
+#!/bin/bash
+
+if ! statdash-cli submit --strict -g backups -j database -s progress; then
+    echo "Warning: Could not report status to dashboard"
+fi
+
+pg_dump mydb > /backups/mydb.sql
+backup_status=$?
+
+if [ $backup_status -eq 0 ]; then
+    statdash-cli submit -g backups -j database -s success
+else
+    statdash-cli submit -g backups -j database -s error -m "Backup failed with code $backup_status"
+fi
+```
+
+### Interactive Terminal Usage
+
+```bash
+# Check overall health with rich output
+$ statdash-cli health
+
+# List groups with status summary
+$ statdash-cli groups
+
+# Drill into a specific group
+$ statdash-cli jobs nightly-builds
+
+# Check group-specific timeout configuration
+$ statdash-cli group-config nightly-builds
+
+# Update group timeout (builds can take longer)
+$ statdash-cli group-config nightly-builds --progress-timeout 30
+```
+
+### Script Integration with Error Logging to Syslog
+
+Enable syslog logging for daemon/cron scenarios where stderr may not be monitored:
+
+```yaml
+# ~/.config/statdash/config.yaml
+url: https://statdash.example.com
+submit:
+  syslog: true
+  syslog_facility: local0
+```
+
+## Troubleshooting
+
+### Connection Refused
+
+```
+Error: Could not connect to http://localhost:5000: Connection refused
+```
+
+**Cause**: The StatDash backend is not running or is running on a different port.
+
+**Solution**:
+- Verify the backend is running: `curl http://localhost:5000/health`
+- Check the URL with `--url` or in config file
+- Set `STATDASH_URL` environment variable
+
+### Request Timeout
+
+```
+Error: Request to http://localhost:5000/health timed out after 10s
+```
+
+**Cause**: The server is slow or unresponsive.
+
+**Solution**:
+- Increase timeout in config file: `timeout: 30`
+- Check server health and load
+- Enable retries: `retries: 3`
+
+### Group/Job Not Found
+
+```
+Error: Group 'nonexistent' not found
+```
+
+**Cause**: The group doesn't exist in the database.
+
+**Solution**:
+- Groups are auto-created on first status submission
+- Submit a status to create the group: `statdash-cli submit -g newgroup -j newjob -s success`
+
+### Invalid Configuration File
+
+```
+Configuration error: Invalid YAML in config file ...
+```
+
+**Cause**: The YAML config file has syntax errors.
+
+**Solution**:
+- Validate your YAML with a linter
+- Check for proper indentation (spaces, not tabs)
+- Ensure string values are properly quoted if they contain special characters
+
+### Shell Completion Not Working
+
+**Cause**: Completion script not installed or shell not reloaded.
+
+**Solution**:
+1. Regenerate the completion script for your shell
+2. Ensure it's in the correct location (see Shell Completion section)
+3. Reload your shell or source the script
+
 ## Development
 
 ```bash
@@ -173,8 +332,14 @@ uv sync --extra dev
 # Run tests
 pytest
 
+# Run tests with coverage
+pytest --cov=statdash_cli
+
 # Format code
 ruff format .
+
+# Lint code
+ruff check .
 
 # Type check
 mypy statdash_cli

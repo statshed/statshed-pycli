@@ -330,34 +330,34 @@ Comprehensive test coverage and documentation.
 
 #### Unit Tests
 
-- [ ] Test `ApiClient` methods with mocked responses
-- [ ] Test config file parsing and merging
-- [ ] Test config file discovery logic
-- [ ] Test error handling and exit codes
-- [ ] Test output formatters (plain and rich)
-- [ ] Test submit command lenient vs strict modes
-- [ ] Test group-config command
-- [ ] Test shell completion generation
+- [X] Test `ApiClient` methods with mocked responses
+- [X] Test config file parsing and merging
+- [X] Test config file discovery logic
+- [X] Test error handling and exit codes
+- [X] Test output formatters (plain and rich)
+- [X] Test submit command lenient vs strict modes
+- [X] Test group-config command
+- [X] Test shell completion generation
 
 #### Integration Tests
 
-- [ ] Test CLI against running backend (pytest fixtures)
-- [ ] Test submit command end-to-end
-- [ ] Test health/groups/jobs queries
-- [ ] Test config and group-config commands
-- [ ] Test error scenarios (connection refused, timeouts, 404s)
+- [X] Test CLI against running backend (pytest fixtures)
+- [X] Test submit command end-to-end
+- [X] Test health/groups/jobs queries
+- [X] Test config and group-config commands
+- [X] Test error scenarios (connection refused, timeouts, 404s)
 
 #### Documentation
 
-- [ ] Update CLI README with full command reference
-- [ ] Document configuration file format and options
-- [ ] Add examples for common use cases:
-  - [ ] CI/CD pipeline integration
-  - [ ] Cron job status reporting
-  - [ ] Interactive terminal usage
-  - [ ] Script integration with `set -eu`
-- [ ] Document shell completion installation for each shell
-- [ ] Add troubleshooting section
+- [X] Update CLI README with full command reference
+- [X] Document configuration file format and options
+- [X] Add examples for common use cases:
+  - [X] CI/CD pipeline integration
+  - [X] Cron job status reporting
+  - [X] Interactive terminal usage
+  - [X] Script integration with `set -eu`
+- [X] Document shell completion installation for each shell
+- [X] Add troubleshooting section
 
 ---
 

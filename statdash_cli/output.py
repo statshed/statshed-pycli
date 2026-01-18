@@ -93,12 +93,16 @@ class PlainFormatter(OutputFormatter):
         status = data.get("status", "unknown")
         indicator = STATUS_INDICATORS.get(status, "❓")
 
+        # AIDEV-NOTE: Backend returns 'total', but we also support 'total_jobs' for compatibility
+        total = data.get("total", data.get("total_jobs", 0))
+
         lines = [
             f"System Health: {indicator} {status.upper()}",
-            f"Total Jobs: {data.get('total_jobs', 0)}",
+            f"Total Jobs: {total}",
         ]
 
-        by_status = data.get("by_status", {})
+        # AIDEV-NOTE: Backend returns 'counts', but we also support 'by_status' for compatibility
+        by_status = data.get("counts", data.get("by_status", {}))
         if by_status:
             lines.append(f"  Success: {by_status.get('success', 0)}")
             lines.append(f"  Error: {by_status.get('error', 0)}")
@@ -116,7 +120,9 @@ class PlainFormatter(OutputFormatter):
 
         lines = []
         for group in groups:
-            indicator = STATUS_INDICATORS.get(group.get("health", "unknown"), "❓")
+            # AIDEV-NOTE: Backend returns 'health_status', but we also support 'health' for compatibility
+            health = group.get("health_status", group.get("health", "unknown"))
+            indicator = STATUS_INDICATORS.get(health, "❓")
             job_count = group.get("job_count", 0)
             lines.append(f"{indicator} {group['name']} ({job_count} jobs)")
 
@@ -281,7 +287,8 @@ class RichFormatter(OutputFormatter):
         from rich.text import Text as RichText
 
         status = data.get("status", "unknown")
-        total_jobs = data.get("total_jobs", 0)
+        # AIDEV-NOTE: Backend returns 'total', but we also support 'total_jobs' for compatibility
+        total_jobs = data.get("total", data.get("total_jobs", 0))
 
         # Create status text with color
         status_text = self._status_text(status)
@@ -299,7 +306,8 @@ class RichFormatter(OutputFormatter):
 
         table.add_row("Total Jobs", str(total_jobs))
 
-        by_status = data.get("by_status", {})
+        # AIDEV-NOTE: Backend returns 'counts', but we also support 'by_status' for compatibility
+        by_status = data.get("counts", data.get("by_status", {}))
         if by_status:
             for status_name in ["success", "error", "progress", "timeout", "stale"]:
                 count = by_status.get(status_name, 0)
@@ -327,7 +335,8 @@ class RichFormatter(OutputFormatter):
         table.add_column("Summary")
 
         for group in groups:
-            health = group.get("health", "unknown")
+            # AIDEV-NOTE: Backend returns 'health_status', but we also support 'health' for compatibility
+            health = group.get("health_status", group.get("health", "unknown"))
             color = STATUS_COLORS.get(health, "white")
             status_icon = RichText("●", style=color)
 
