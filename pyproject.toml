@@ -3,7 +3,7 @@ name = "statdash-cli"
 version = "1.0.0"
 description = "Command-line interface for StatDash status dashboard"
 readme = "README.md"
-license = "MIT"
+license = {file = "LICENSE"}
 requires-python = ">=3.10"
 authors = [
     { name = "Sean" }
@@ -14,7 +14,7 @@ classifiers = [
     "Environment :: Console",
     "Intended Audience :: Developers",
     "Intended Audience :: System Administrators",
-    "License :: OSI Approved :: MIT License",
+    "License :: CC0 1.0 Universal (CC0 1.0) Public Domain Dedication",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
@@ -50,10 +50,23 @@ statdash-cli = "statdash_cli.main:cli"
 Homepage = "https://github.com/statdash/statdash-cli"
 Documentation = "https://github.com/statdash/statdash-cli#readme"
 Repository = "https://github.com/statdash/statdash-cli.git"
+"Bug Tracker" = "https://github.com/statdash/statdash-cli/issues"
+Changelog = "https://github.com/statdash/statdash-cli/blob/main/CHANGELOG.md"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "pyproject.toml",
+    "statdash_cli/",
+    "tests/",
+    "docs/*.1",
+    "LICENSE",
+    "README.md",
+    "CHANGELOG.md",
+]
 
 [tool.ruff]
 line-length = 100
