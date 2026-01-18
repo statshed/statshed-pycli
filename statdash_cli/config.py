@@ -59,7 +59,6 @@ class Config:
         cls,
         config_path: str | None = None,
         cli_url: str | None = None,
-        cli_quiet: bool = False,
         cli_no_color: bool = False,
         cli_json: bool = False,
     ) -> "Config":
@@ -68,7 +67,6 @@ class Config:
         Args:
             config_path: Explicit config file path (CLI arg or env var)
             cli_url: URL from CLI argument
-            cli_quiet: Quiet mode from CLI
             cli_no_color: No-color mode from CLI
             cli_json: JSON output mode from CLI
 

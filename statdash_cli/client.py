@@ -5,7 +5,7 @@ Errors are converted to StatDash exceptions with appropriate exit codes.
 """
 
 from typing import Any
-from urllib.parse import urljoin
+from urllib.parse import quote, urljoin
 
 import requests
 
@@ -156,7 +156,9 @@ class ApiClient:
         Returns:
             Group details and list of jobs
         """
-        return self._request("GET", f"/groups/{group_name}/jobs")
+        # AIDEV-NOTE: URL-encode group_name to handle special characters safely
+        encoded_name = quote(group_name, safe="")
+        return self._request("GET", f"/groups/{encoded_name}/jobs")
 
     def get_config(self) -> dict[str, Any]:
         """Get global configuration.
@@ -197,7 +199,8 @@ class ApiClient:
         Returns:
             Group configuration with effective values
         """
-        return self._request("GET", f"/groups/{group_name}/config")
+        encoded_name = quote(group_name, safe="")
+        return self._request("GET", f"/groups/{encoded_name}/config")
 
     def update_group_config(
         self,
@@ -231,4 +234,5 @@ class ApiClient:
         elif staleness_timeout_hours is not None:
             payload["staleness_timeout_hours"] = staleness_timeout_hours
 
-        return self._request("PUT", f"/groups/{group_name}/config", json=payload)
+        encoded_name = quote(group_name, safe="")
+        return self._request("PUT", f"/groups/{encoded_name}/config", json=payload)

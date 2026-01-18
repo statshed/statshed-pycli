@@ -97,7 +97,6 @@ def cli(
         ctx.config = Config.from_sources(
             config_path=config_path,
             cli_url=url,
-            cli_quiet=quiet,
             cli_no_color=no_color,
             cli_json=json_output,
         )
