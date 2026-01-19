@@ -1,0 +1,21 @@
+Package: statdash-cli
+Version: 1.0.0-1
+Architecture: all
+Maintainer: Sean <sean@realgo.com>
+Installed-Size: 113
+Depends: python3-click, python3-requests, python3-yaml, python3:any
+Suggests: python3-rich
+Section: utils
+Priority: optional
+Homepage: https://github.com/statdash/statdash-cli
+Description: Command-line interface for StatDash status dashboard
+ StatDash CLI provides commands for interacting with the StatDash status
+ dashboard from the command line:
+ .
+  - submit: Report job status (success, error, progress)
+  - health: Check overall system health
+  - groups: List all groups with health summaries
+  - jobs: List jobs within a specific group
+  - config: View and update global timeout configuration
+  - group-config: View and update group-specific settings
+  - completion: Generate shell completion scripts
