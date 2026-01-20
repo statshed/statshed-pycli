@@ -48,7 +48,7 @@ class TestCompleteGroupNames:
         """Test that group names are returned from API."""
         responses.add(
             responses.GET,
-            "http://localhost:5000/groups",
+            "http://localhost:7828/groups",
             json={
                 "groups": [
                     {"name": "nightly-builds", "health": "healthy", "job_count": 5},
@@ -72,7 +72,7 @@ class TestCompleteGroupNames:
         """Test that completions are filtered by prefix."""
         responses.add(
             responses.GET,
-            "http://localhost:5000/groups",
+            "http://localhost:7828/groups",
             json={
                 "groups": [
                     {"name": "nightly-builds", "health": "healthy", "job_count": 5},
@@ -96,7 +96,7 @@ class TestCompleteGroupNames:
         """Test that empty list is returned on API error."""
         responses.add(
             responses.GET,
-            "http://localhost:5000/groups",
+            "http://localhost:7828/groups",
             json={"error": "Server error"},
             status=500,
         )
@@ -115,7 +115,7 @@ class TestCompleteGroupNames:
         # Mock a connection error
         responses.add(
             responses.GET,
-            "http://localhost:5000/groups",
+            "http://localhost:7828/groups",
             body=requests.exceptions.ConnectionError("Connection refused"),
         )
 
@@ -155,7 +155,7 @@ class TestCompleteJobNames:
         """Test that job names are returned from API."""
         responses.add(
             responses.GET,
-            "http://localhost:5000/groups/test-group/jobs",
+            "http://localhost:7828/groups/test-group/jobs",
             json={
                 "jobs": [
                     {"name": "backend-tests", "status": "success"},
@@ -180,7 +180,7 @@ class TestCompleteJobNames:
         """Test that job completions are filtered by prefix."""
         responses.add(
             responses.GET,
-            "http://localhost:5000/groups/test-group/jobs",
+            "http://localhost:7828/groups/test-group/jobs",
             json={
                 "jobs": [
                     {"name": "backend-tests", "status": "success"},
@@ -214,7 +214,7 @@ class TestCompleteJobNames:
         """Test that group names with special characters are URL encoded."""
         responses.add(
             responses.GET,
-            "http://localhost:5000/groups/group%20with%20spaces/jobs",
+            "http://localhost:7828/groups/group%20with%20spaces/jobs",
             json={"jobs": [{"name": "test-job", "status": "success"}]},
             status=200,
         )

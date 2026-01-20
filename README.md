@@ -70,13 +70,13 @@ The CLI reads configuration from these locations (in order of precedence):
 
 1. Path specified via `--config` or `STATDASH_CONFIG` environment variable
 2. `./statdash-cli.yaml` (current directory)
-3. `~/.config/statdash/config.yaml`
-4. `/etc/statdash/config.yaml`
+3. `~/.config/statdash/statdash.yaml`
+4. `/etc/statdash/statdash.yaml`
 
 Example configuration:
 
 ```yaml
-url: http://localhost:5000
+url: http://localhost:7828
 output_format: table
 color: auto
 timeout: 10
@@ -256,7 +256,7 @@ $ statdash-cli group-config nightly-builds --progress-timeout 30
 Enable syslog logging for daemon/cron scenarios where stderr may not be monitored:
 
 ```yaml
-# ~/.config/statdash/config.yaml
+# ~/.config/statdash/statdash.yaml
 url: https://statdash.example.com
 submit:
   syslog: true
@@ -268,20 +268,20 @@ submit:
 ### Connection Refused
 
 ```
-Error: Could not connect to http://localhost:5000: Connection refused
+Error: Could not connect to http://localhost:7828: Connection refused
 ```
 
 **Cause**: The StatDash backend is not running or is running on a different port.
 
 **Solution**:
-- Verify the backend is running: `curl http://localhost:5000/health`
+- Verify the backend is running: `curl http://localhost:7828/health`
 - Check the URL with `--url` or in config file
 - Set `STATDASH_URL` environment variable
 
 ### Request Timeout
 
 ```
-Error: Request to http://localhost:5000/health timed out after 10s
+Error: Request to http://localhost:7828/health timed out after 10s
 ```
 
 **Cause**: The server is slow or unresponsive.

@@ -280,11 +280,11 @@ class TestErrorScenarios:
 
         responses.add(
             responses.GET,
-            "http://localhost:5000/health",
+            "http://localhost:7828/health",
             body=requests.exceptions.Timeout("Request timed out"),
         )
 
-        result = runner.invoke(cli, ["-u", "http://localhost:5000", "health"])
+        result = runner.invoke(cli, ["-u", "http://localhost:7828", "health"])
         assert result.exit_code == ExitCode.ERROR_TIMEOUT
 
     @responses.activate
@@ -292,10 +292,10 @@ class TestErrorScenarios:
         """Test 404 not found error."""
         responses.add(
             responses.GET,
-            "http://localhost:5000/groups/nonexistent/jobs",
+            "http://localhost:7828/groups/nonexistent/jobs",
             json={"error": "Group 'nonexistent' not found"},
             status=404,
         )
 
-        result = runner.invoke(cli, ["-u", "http://localhost:5000", "jobs", "nonexistent"])
+        result = runner.invoke(cli, ["-u", "http://localhost:7828", "jobs", "nonexistent"])
         assert result.exit_code == ExitCode.ERROR_NOT_FOUND

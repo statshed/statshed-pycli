@@ -206,21 +206,21 @@ app.register_blueprint(auth_bp)
 ## Testing with curl
 ```bash
 # Register
-curl -X POST http://localhost:5000/api/auth/register \
+curl -X POST http://localhost:7828/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{"email": "user@example.com", "password": "secret123"}'
 
 # Login
-curl -X POST http://localhost:5000/api/auth/login \
+curl -X POST http://localhost:7828/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email": "user@example.com", "password": "secret123"}'
 
 # Access protected route
-curl http://localhost:5000/api/protected \
+curl http://localhost:7828/api/protected \
   -H "Authorization: Bearer <access_token>"
 
 # Refresh token
-curl -X POST http://localhost:5000/api/auth/refresh \
+curl -X POST http://localhost:7828/api/auth/refresh \
   -H "Authorization: Bearer <refresh_token>"
 ```
 

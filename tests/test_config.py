@@ -21,7 +21,7 @@ class TestConfigDefaults:
     def test_default_config(self) -> None:
         """Test that Config has sensible defaults."""
         config = Config()
-        assert config.url == "http://localhost:5000"
+        assert config.url == "http://localhost:7828"
         assert config.output_format == "table"
         assert config.color == "auto"
         assert config.timeout == 10
@@ -114,7 +114,7 @@ submit:
         config_file.write_text("")
 
         config = _load_config_file(config_file)
-        assert config.url == "http://localhost:5000"
+        assert config.url == "http://localhost:7828"
 
     def test_load_partial_config(self, tmp_path: Path) -> None:
         """Test loading a config with only some fields."""

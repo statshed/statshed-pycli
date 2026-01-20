@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Configuration System**
   - YAML configuration file support with automatic discovery
-  - Configuration file search order: CLI option > environment variable > ./statdash-cli.yaml > ~/.config/statdash/config.yaml > /etc/statdash/config.yaml
+  - Configuration file search order: CLI option > environment variable > ./statdash-cli.yaml > ~/.config/statdash/statdash.yaml > /etc/statdash/statdash.yaml
   - Support for all settings: URL, timeout, retries, output format, color mode
 
 - **Error Handling**

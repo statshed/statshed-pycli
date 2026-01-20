@@ -46,7 +46,7 @@ cli/
 
 | Option | Short | Environment Variable | Description |
 |--------|-------|---------------------|-------------|
-| `--url` | `-u` | `STATDASH_URL` | StatDash API URL (default: from config or `http://localhost:5000`) |
+| `--url` | `-u` | `STATDASH_URL` | StatDash API URL (default: from config or `http://localhost:7828`) |
 | `--config` | `-c` | `STATDASH_CONFIG` | Path to config file |
 | `--quiet` | `-q` | - | Suppress non-error output |
 | `--no-color` | - | `NO_COLOR` | Disable colored output |
@@ -149,8 +149,8 @@ The CLI reads configuration from the following locations (in order of precedence
 
 1. Path specified via `--config` or `STATDASH_CONFIG`
 2. `./statdash-cli.yaml` (current directory)
-3. `~/.config/statdash/config.yaml`
-4. `/etc/statdash/config.yaml`
+3. `~/.config/statdash/statdash.yaml`
+4. `/etc/statdash/statdash.yaml`
 
 ### Configuration Schema
 
@@ -158,7 +158,7 @@ The CLI reads configuration from the following locations (in order of precedence
 # StatDash CLI Configuration
 
 # API server URL
-url: http://localhost:5000
+url: http://localhost:7828
 
 # Default output format: "table" or "json"
 output_format: table
@@ -470,7 +470,7 @@ $ statdash-cli group-config nightly-builds --progress-timeout 30
 ### Configuration File Example
 
 ```yaml
-# ~/.config/statdash/config.yaml
+# ~/.config/statdash/statdash.yaml
 url: https://statdash.internal.example.com
 color: auto
 timeout: 30

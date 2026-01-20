@@ -27,7 +27,7 @@ class TestHealthCommand:
         """Test health command with healthy status."""
         responses.add(
             responses.GET,
-            "http://localhost:5000/health",
+            "http://localhost:7828/health",
             json={
                 "status": "healthy",
                 "total_jobs": 5,
@@ -45,7 +45,7 @@ class TestHealthCommand:
         """Test health command with unhealthy status."""
         responses.add(
             responses.GET,
-            "http://localhost:5000/health",
+            "http://localhost:7828/health",
             json={"status": "unhealthy", "total_jobs": 3},
             status=200,
         )
@@ -59,7 +59,7 @@ class TestHealthCommand:
         """Test health command with JSON output."""
         responses.add(
             responses.GET,
-            "http://localhost:5000/health",
+            "http://localhost:7828/health",
             json={"status": "healthy", "total_jobs": 5},
             status=200,
         )
@@ -74,7 +74,7 @@ class TestHealthCommand:
         """Test health command with connection error."""
         responses.add(
             responses.GET,
-            "http://localhost:5000/health",
+            "http://localhost:7828/health",
             body=requests.exceptions.ConnectionError("Connection refused"),
         )
 
@@ -91,7 +91,7 @@ class TestSubmitCommand:
         """Test successful status submission."""
         responses.add(
             responses.POST,
-            "http://localhost:5000/status",
+            "http://localhost:7828/status",
             json={
                 "success": True,
                 "job": {
@@ -114,7 +114,7 @@ class TestSubmitCommand:
         """Test submission with message."""
         responses.add(
             responses.POST,
-            "http://localhost:5000/status",
+            "http://localhost:7828/status",
             json={
                 "success": True,
                 "job": {"status": "error", "message": "Build failed"},
@@ -143,7 +143,7 @@ class TestSubmitCommand:
         """Test that lenient mode (default) exits 0 on error."""
         responses.add(
             responses.POST,
-            "http://localhost:5000/status",
+            "http://localhost:7828/status",
             body=requests.exceptions.ConnectionError("Connection refused"),
         )
 
@@ -157,7 +157,7 @@ class TestSubmitCommand:
         """Test that strict mode exits with error code."""
         responses.add(
             responses.POST,
-            "http://localhost:5000/status",
+            "http://localhost:7828/status",
             body=requests.exceptions.ConnectionError("Connection refused"),
         )
 
@@ -171,7 +171,7 @@ class TestSubmitCommand:
         """Test that quiet mode suppresses output."""
         responses.add(
             responses.POST,
-            "http://localhost:5000/status",
+            "http://localhost:7828/status",
             json={"success": True, "job": {"status": "success"}},
             status=201,
         )
@@ -194,7 +194,7 @@ class TestSubmitCommand:
         # Create config file with syslog enabled
         config_file = tmp_path / "config.yaml"
         config_file.write_text("""
-url: http://localhost:5000
+url: http://localhost:7828
 submit:
   syslog: true
   syslog_facility: local0
@@ -203,7 +203,7 @@ submit:
 
         responses.add(
             responses.POST,
-            "http://localhost:5000/status",
+            "http://localhost:7828/status",
             body=requests.exceptions.ConnectionError("Connection refused"),
         )
 
@@ -225,7 +225,7 @@ class TestGroupsCommand:
         """Test listing groups."""
         responses.add(
             responses.GET,
-            "http://localhost:5000/groups",
+            "http://localhost:7828/groups",
             json={
                 "groups": [
                     {"name": "group-a", "job_count": 3, "health": "healthy"},
@@ -245,7 +245,7 @@ class TestGroupsCommand:
         """Test groups with JSON output."""
         responses.add(
             responses.GET,
-            "http://localhost:5000/groups",
+            "http://localhost:7828/groups",
             json={"groups": [{"name": "test"}]},
             status=200,
         )
@@ -264,7 +264,7 @@ class TestJobsCommand:
         """Test listing jobs in a group."""
         responses.add(
             responses.GET,
-            "http://localhost:5000/groups/test-group/jobs",
+            "http://localhost:7828/groups/test-group/jobs",
             json={
                 "group": {"name": "test-group"},
                 "jobs": [
@@ -285,7 +285,7 @@ class TestJobsCommand:
         """Test jobs command with nonexistent group."""
         responses.add(
             responses.GET,
-            "http://localhost:5000/groups/nonexistent/jobs",
+            "http://localhost:7828/groups/nonexistent/jobs",
             json={"error": "Group not found"},
             status=404,
         )
@@ -303,7 +303,7 @@ class TestConfigCommand:
         """Test viewing global config."""
         responses.add(
             responses.GET,
-            "http://localhost:5000/config",
+            "http://localhost:7828/config",
             json={
                 "progress_timeout_minutes": 5,
                 "staleness_timeout_hours": 24,
@@ -321,7 +321,7 @@ class TestConfigCommand:
         """Test updating global config."""
         responses.add(
             responses.PUT,
-            "http://localhost:5000/config",
+            "http://localhost:7828/config",
             json={
                 "progress_timeout_minutes": 10,
                 "staleness_timeout_hours": 48,
@@ -342,7 +342,7 @@ class TestGroupConfigCommand:
         """Test viewing group config."""
         responses.add(
             responses.GET,
-            "http://localhost:5000/groups/test-group/config",
+            "http://localhost:7828/groups/test-group/config",
             json={
                 "group": "test-group",
                 "progress_timeout_minutes": None,
@@ -362,7 +362,7 @@ class TestGroupConfigCommand:
         """Test updating group config."""
         responses.add(
             responses.PUT,
-            "http://localhost:5000/groups/test-group/config",
+            "http://localhost:7828/groups/test-group/config",
             json={
                 "group": "test-group",
                 "progress_timeout_minutes": 15,
@@ -378,7 +378,7 @@ class TestGroupConfigCommand:
         """Test group-config with nonexistent group."""
         responses.add(
             responses.GET,
-            "http://localhost:5000/groups/nonexistent/config",
+            "http://localhost:7828/groups/nonexistent/config",
             json={"error": "Group not found"},
             status=404,
         )
@@ -435,7 +435,7 @@ class TestGlobalOptions:
         """Test --json global option."""
         responses.add(
             responses.GET,
-            "http://localhost:5000/health",
+            "http://localhost:7828/health",
             json={"status": "healthy"},
             status=200,
         )

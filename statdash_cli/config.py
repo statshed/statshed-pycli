@@ -17,7 +17,7 @@ import yaml
 from statdash_cli.errors import ConfigError
 
 # Default configuration values
-DEFAULT_URL = "http://localhost:5000"
+DEFAULT_URL = "http://localhost:7828"
 DEFAULT_OUTPUT_FORMAT = "table"
 DEFAULT_COLOR = "auto"
 DEFAULT_TIMEOUT = 10
@@ -27,8 +27,8 @@ DEFAULT_RETRY_DELAY = 1.0
 # Configuration file search paths (in order of precedence)
 CONFIG_SEARCH_PATHS = [
     Path("./statdash-cli.yaml"),
-    Path.home() / ".config" / "statdash" / "config.yaml",
-    Path("/etc/statdash/config.yaml"),
+    Path.home() / ".config" / "statdash" / "statdash.yaml",
+    Path("/etc/statdash/statdash.yaml"),
 ]
 
 
