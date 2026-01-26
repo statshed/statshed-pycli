@@ -5,6 +5,7 @@ Errors are converted to StatDash exceptions with appropriate exit codes.
 Retry logic handles transient failures (connection errors, timeouts).
 """
 
+import os
 import random
 import time
 from typing import Any
@@ -63,8 +64,6 @@ class ApiClient:
         method: str,
         path: str,
         json: dict[str, Any] | None = None,
-        data: dict[str, Any] | None = None,
-        files: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Make an HTTP request to the API with retry logic.
 
@@ -72,8 +71,6 @@ class ApiClient:
             method: HTTP method (GET, POST, PUT, etc.)
             path: API path (e.g., "/health")
             json: Optional JSON body for POST/PUT
-            data: Optional form data for multipart requests
-            files: Optional files for multipart requests
 
         Returns:
             Parsed JSON response
@@ -83,6 +80,10 @@ class ApiClient:
             TimeoutError: Request timed out (after all retries)
             ApiError: Server returned an error
             NotFoundError: Resource not found
+
+        AIDEV-NOTE: This method is for JSON requests only. Multipart/form-data uploads
+        (e.g., log file uploads) use _submit_status_with_log() which handles file
+        reopening on retry. Keeping these separate avoids file handle issues with retries.
         """
         url = self._url(path)
         last_error: ConnectionError | TimeoutError | None = None
@@ -95,15 +96,10 @@ class ApiClient:
         last_exception: Exception | None = None
         for attempt in range(self.retries + 1):
             try:
-                # AIDEV-NOTE: When files are provided, we need to reopen them for each
-                # retry because the file handle may have been consumed in a previous attempt.
-                # This is handled by the caller passing a file path, not an open file handle.
                 response = requests.request(
                     method=method,
                     url=url,
                     json=json,
-                    data=data,
-                    files=files,
                     timeout=self.timeout,
                 )
                 # Success - break out of retry loop
@@ -232,8 +228,10 @@ class ApiClient:
                     form_data["message"] = message
 
                 # Open file fresh for each attempt (file handle is consumed after request)
+                # Use original filename for backend display/auditing
+                filename = os.path.basename(log_path)
                 with open(log_path, "rb") as log_file:
-                    files = {"log": ("log.txt", log_file, "text/plain")}
+                    files = {"log": (filename, log_file, "text/plain")}
                     response = requests.post(
                         url,
                         data=form_data,

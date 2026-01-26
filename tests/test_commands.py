@@ -15,7 +15,12 @@ from statdash_cli.main import cli
 
 @pytest.fixture
 def runner() -> CliRunner:
-    """Create a CLI test runner."""
+    """Create a CLI test runner.
+
+    AIDEV-NOTE: Click 8.x CliRunner captures both stdout and stderr in result.output
+    by default (there's no mix_stderr parameter - it was added in Click 9.x).
+    Warnings printed to stderr via click.echo(err=True) are included in result.output.
+    """
     return CliRunner()
 
 
