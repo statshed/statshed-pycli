@@ -486,6 +486,132 @@ class TestApiClientTimeout:
         assert len(responses.calls) == 3
 
 
+class TestApiClientSubmitWithLog:
+    """Test status submission with log file upload."""
+
+    @responses.activate
+    def test_submit_status_with_log(self, tmp_path: pytest.TempPathFactory) -> None:
+        """Test successful status submission with log file."""
+        # Create a temporary log file
+        log_file = tmp_path / "test.log"  # type: ignore[operator]
+        log_file.write_text("Line 1\nLine 2\nLine 3\n")
+
+        responses.add(
+            responses.POST,
+            "http://localhost:7828/status",
+            json={
+                "success": True,
+                "job": {
+                    "id": 1,
+                    "group_name": "test-group",
+                    "name": "test-job",
+                    "status": "success",
+                    "has_log": True,
+                    "log_line_count": 3,
+                    "log_truncated": False,
+                },
+            },
+            status=201,
+        )
+
+        client = ApiClient("http://localhost:7828")
+        result = client.submit_status(
+            "test-group", "test-job", "success", "Test passed", str(log_file)
+        )
+
+        assert result["success"] is True
+        assert result["job"]["has_log"] is True
+
+        # Verify multipart request was sent
+        request = responses.calls[0].request
+        assert "multipart/form-data" in request.headers["Content-Type"]
+
+    @responses.activate
+    def test_submit_status_with_log_no_message(self, tmp_path: pytest.TempPathFactory) -> None:
+        """Test submission with log but no message."""
+        log_file = tmp_path / "test.log"  # type: ignore[operator]
+        log_file.write_text("Log content")
+
+        responses.add(
+            responses.POST,
+            "http://localhost:7828/status",
+            json={
+                "success": True,
+                "job": {"status": "success", "has_log": True},
+            },
+            status=201,
+        )
+
+        client = ApiClient("http://localhost:7828")
+        result = client.submit_status("group", "job", "success", log_path=str(log_file))
+
+        assert result["success"] is True
+        # Verify multipart form data fields
+        request = responses.calls[0].request
+        body = request.body
+        # Check that form fields are present in multipart body
+        assert b"group" in body
+        assert b"job" in body
+        assert b"status" in body
+
+    @responses.activate
+    def test_submit_with_log_retry_on_connection_error(
+        self, tmp_path: pytest.TempPathFactory
+    ) -> None:
+        """Test that retries work correctly with log file uploads."""
+        log_file = tmp_path / "test.log"  # type: ignore[operator]
+        log_file.write_text("Retry test log")
+
+        # First two calls fail, third succeeds
+        responses.add(
+            responses.POST,
+            "http://localhost:7828/status",
+            body=requests.exceptions.ConnectionError("Connection refused"),
+        )
+        responses.add(
+            responses.POST,
+            "http://localhost:7828/status",
+            body=requests.exceptions.ConnectionError("Connection refused"),
+        )
+        responses.add(
+            responses.POST,
+            "http://localhost:7828/status",
+            json={"success": True, "job": {"status": "success", "has_log": True}},
+            status=201,
+        )
+
+        client = ApiClient("http://localhost:7828", retries=2, retry_delay=0.01)
+        result = client.submit_status("group", "job", "success", log_path=str(log_file))
+
+        assert result["success"] is True
+        assert len(responses.calls) == 3
+
+    @responses.activate
+    def test_submit_with_log_uploads_disabled_warning(
+        self, tmp_path: pytest.TempPathFactory
+    ) -> None:
+        """Test that warning is returned when log uploads are disabled."""
+        log_file = tmp_path / "test.log"  # type: ignore[operator]
+        log_file.write_text("Log content")
+
+        responses.add(
+            responses.POST,
+            "http://localhost:7828/status",
+            json={
+                "success": True,
+                "job": {"status": "success", "has_log": False},
+                "warning": "Log uploads are disabled",
+            },
+            status=201,
+        )
+
+        client = ApiClient("http://localhost:7828")
+        result = client.submit_status("group", "job", "success", log_path=str(log_file))
+
+        assert result["success"] is True
+        assert result["warning"] == "Log uploads are disabled"
+
+
 class TestApiClientUrlEncoding:
     """Test URL encoding for special characters."""
 

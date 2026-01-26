@@ -216,6 +216,150 @@ submit:
             # No warning on stderr when syslog is enabled
             assert "Warning:" not in result.output
 
+    @responses.activate
+    def test_submit_with_log_file(self, runner: CliRunner, tmp_path: Path) -> None:
+        """Test successful submission with log file."""
+        # Create a test log file
+        log_file = tmp_path / "test.log"
+        log_file.write_text("Line 1\nLine 2\nLine 3\n")
+
+        responses.add(
+            responses.POST,
+            "http://localhost:7828/status",
+            json={
+                "success": True,
+                "job": {
+                    "group_name": "test-group",
+                    "name": "test-job",
+                    "status": "success",
+                    "has_log": True,
+                    "log_line_count": 3,
+                    "log_truncated": False,
+                },
+            },
+            status=201,
+        )
+
+        result = runner.invoke(
+            cli,
+            [
+                "submit",
+                "-g",
+                "test-group",
+                "-j",
+                "test-job",
+                "-s",
+                "success",
+                "--log",
+                str(log_file),
+            ],
+        )
+        assert result.exit_code == 0
+        assert "test-group/test-job" in result.output
+
+    def test_submit_with_log_file_not_found(self, runner: CliRunner) -> None:
+        """Test that nonexistent log file is rejected."""
+        result = runner.invoke(
+            cli,
+            [
+                "submit",
+                "-g",
+                "test",
+                "-j",
+                "test",
+                "-s",
+                "success",
+                "--log",
+                "/nonexistent/path/to/file.log",
+            ],
+        )
+        assert result.exit_code != 0
+        # Click should show error about file not existing
+        assert "does not exist" in result.output.lower() or "not found" in result.output.lower()
+
+    @responses.activate
+    def test_submit_with_log_uploads_disabled_warning(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        """Test that warning is shown when log uploads are disabled on server."""
+        log_file = tmp_path / "test.log"
+        log_file.write_text("Test log content")
+
+        responses.add(
+            responses.POST,
+            "http://localhost:7828/status",
+            json={
+                "success": True,
+                "job": {
+                    "group_name": "test-group",
+                    "name": "test-job",
+                    "status": "success",
+                    "has_log": False,
+                },
+                "warning": "Log uploads are disabled",
+            },
+            status=201,
+        )
+
+        result = runner.invoke(
+            cli,
+            [
+                "submit",
+                "-g",
+                "test-group",
+                "-j",
+                "test-job",
+                "-s",
+                "success",
+                "--log",
+                str(log_file),
+            ],
+        )
+        assert result.exit_code == 0
+        assert "test-group/test-job" in result.output
+        # Warning should be shown
+        assert "Log uploads are disabled" in result.output
+
+    @responses.activate
+    def test_submit_with_log_and_message(self, runner: CliRunner, tmp_path: Path) -> None:
+        """Test submission with both log file and message."""
+        log_file = tmp_path / "test.log"
+        log_file.write_text("Build output here")
+
+        responses.add(
+            responses.POST,
+            "http://localhost:7828/status",
+            json={
+                "success": True,
+                "job": {
+                    "group_name": "builds",
+                    "name": "build-123",
+                    "status": "error",
+                    "message": "Build failed",
+                    "has_log": True,
+                },
+            },
+            status=201,
+        )
+
+        result = runner.invoke(
+            cli,
+            [
+                "submit",
+                "-g",
+                "builds",
+                "-j",
+                "build-123",
+                "-s",
+                "error",
+                "-m",
+                "Build failed",
+                "-l",
+                str(log_file),
+            ],
+        )
+        assert result.exit_code == 0
+
 
 class TestGroupsCommand:
     """Test the groups command."""

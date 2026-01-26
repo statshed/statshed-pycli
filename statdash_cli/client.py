@@ -63,6 +63,8 @@ class ApiClient:
         method: str,
         path: str,
         json: dict[str, Any] | None = None,
+        data: dict[str, Any] | None = None,
+        files: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Make an HTTP request to the API with retry logic.
 
@@ -70,6 +72,8 @@ class ApiClient:
             method: HTTP method (GET, POST, PUT, etc.)
             path: API path (e.g., "/health")
             json: Optional JSON body for POST/PUT
+            data: Optional form data for multipart requests
+            files: Optional files for multipart requests
 
         Returns:
             Parsed JSON response
@@ -91,10 +95,15 @@ class ApiClient:
         last_exception: Exception | None = None
         for attempt in range(self.retries + 1):
             try:
+                # AIDEV-NOTE: When files are provided, we need to reopen them for each
+                # retry because the file handle may have been consumed in a previous attempt.
+                # This is handled by the caller passing a file path, not an open file handle.
                 response = requests.request(
                     method=method,
                     url=url,
                     json=json,
+                    data=data,
+                    files=files,
                     timeout=self.timeout,
                 )
                 # Success - break out of retry loop
@@ -160,6 +169,7 @@ class ApiClient:
         job: str,
         status: str,
         message: str | None = None,
+        log_path: str | None = None,
     ) -> dict[str, Any]:
         """Submit a job status update.
 
@@ -168,10 +178,19 @@ class ApiClient:
             job: Job name
             status: Status value (success, error, progress)
             message: Optional status message
+            log_path: Optional path to log file to upload
 
         Returns:
             Created/updated job data
+
+        AIDEV-NOTE: When log_path is provided, uses multipart/form-data instead of JSON.
+        The backend accepts both formats. Multipart is required for file uploads.
         """
+        if log_path:
+            # Use multipart/form-data for log uploads
+            return self._submit_status_with_log(group, job, status, message, log_path)
+
+        # Use JSON for status updates without log
         payload: dict[str, Any] = {
             "group": group,
             "job": job,
@@ -181,6 +200,89 @@ class ApiClient:
             payload["message"] = message
 
         return self._request("POST", "/status", json=payload)
+
+    def _submit_status_with_log(
+        self,
+        group: str,
+        job: str,
+        status: str,
+        message: str | None,
+        log_path: str,
+    ) -> dict[str, Any]:
+        """Submit status with log file using multipart/form-data.
+
+        AIDEV-NOTE: This method handles file opening/closing for each retry attempt
+        because the file handle may be consumed after a failed request. The file
+        is opened fresh for each attempt in the retry loop.
+        """
+        url = self._url("/status")
+        last_error: ConnectionError | TimeoutError | None = None
+        response: requests.Response | None = None
+        last_exception: Exception | None = None
+
+        for attempt in range(self.retries + 1):
+            try:
+                # Prepare form data
+                form_data: dict[str, Any] = {
+                    "group": group,
+                    "job": job,
+                    "status": status,
+                }
+                if message:
+                    form_data["message"] = message
+
+                # Open file fresh for each attempt (file handle is consumed after request)
+                with open(log_path, "rb") as log_file:
+                    files = {"log": ("log.txt", log_file, "text/plain")}
+                    response = requests.post(
+                        url,
+                        data=form_data,
+                        files=files,
+                        timeout=self.timeout,
+                    )
+                # Success - break out of retry loop
+                break
+            except requests.exceptions.ConnectionError as e:
+                last_exception = e
+                last_error = ConnectionError(f"Could not connect to {self.base_url}: {e}")
+            except requests.exceptions.Timeout as e:
+                last_exception = e
+                last_error = TimeoutError(f"Request to {url} timed out after {self.timeout}s")
+            except requests.exceptions.RequestException as e:
+                raise ApiError(f"Request failed: {e}") from e
+
+            if attempt < self.retries:
+                base_delay = self.retry_delay * (2**attempt)
+                jitter = random.uniform(0, self.retry_delay)
+                time.sleep(base_delay + jitter)
+        else:
+            if last_error is not None:
+                raise last_error from last_exception
+
+        assert response is not None
+
+        # Handle HTTP errors
+        if response.status_code == 404:
+            try:
+                error_data = response.json()
+                error_message = error_data.get("error", "Resource not found")
+            except (ValueError, KeyError):
+                error_message = "Resource not found"
+            raise NotFoundError(error_message)
+
+        if response.status_code >= 400:
+            try:
+                error_data = response.json()
+                error_message = error_data.get("error", f"API error (HTTP {response.status_code})")
+            except (ValueError, KeyError):
+                error_message = f"API error (HTTP {response.status_code})"
+            raise ApiError(error_message, status_code=response.status_code)
+
+        try:
+            result: dict[str, Any] = response.json()
+            return result
+        except ValueError as e:
+            raise ApiError(f"Invalid JSON response from server: {e}") from e
 
     def get_groups(self) -> dict[str, Any]:
         """Get all groups with health summaries.

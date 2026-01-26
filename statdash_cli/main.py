@@ -157,6 +157,13 @@ def health(ctx: Context, json_output: bool) -> None:
 )
 @click.option("--message", "-m", help="Optional status message")
 @click.option(
+    "--log",
+    "-l",
+    "log_path",
+    type=click.Path(exists=True, dir_okay=False, readable=True),
+    help="Path to log file to attach",
+)
+@click.option(
     "--strict",
     is_flag=True,
     help="Exit with error code on failure (default: swallow errors)",
@@ -168,12 +175,16 @@ def submit(
     job: str,
     status: str,
     message: str | None,
+    log_path: str | None,
     strict: bool,
 ) -> None:
     """Submit a job status update.
 
     By default, errors are swallowed and the command exits with code 0.
     Use --strict to exit with an error code on failure.
+
+    Optionally attach a log file with --log. If log uploads are disabled
+    on the server, the status update still succeeds but a warning is shown.
     """
     assert ctx.config is not None
 
@@ -182,11 +193,17 @@ def submit(
 
     try:
         client = ctx.get_client()
-        data = client.submit_status(group, job, status, message)
+        data = client.submit_status(group, job, status, message, log_path)
 
         if not ctx.quiet:
             formatter: OutputFormatter = JsonFormatter() if ctx.json_output else ctx.get_formatter()
             ctx.output(formatter.submit_success(data))
+
+            # AIDEV-NOTE: Backend returns warning field when log uploads are disabled
+            # but status update still succeeds. Show this to user as a warning.
+            warning = data.get("warning")
+            if warning:
+                click.echo(f"Warning: {warning}", err=True)
 
     except StatDashError as e:
         if use_strict:
