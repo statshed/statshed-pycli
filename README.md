@@ -347,6 +347,44 @@ ruff check .
 mypy statdash_cli
 ```
 
+## Building a Debian Package
+
+### Building the Package
+
+From the project root directory:
+
+```bash
+# Build the package (binary only, no source package signing)
+dpkg-buildpackage -us -uc -b
+
+# Or use debuild for a cleaner build environment
+debuild -us -uc -b
+```
+
+The built `.deb` file will be placed in the parent directory (`../`).
+
+### Installing the Package
+
+```bash
+sudo dpkg -i ../statdash-cli_*.deb
+
+# Install any missing dependencies
+sudo apt install -f
+```
+
+### Updating the Version
+
+Before building a new release, update `debian/changelog`:
+
+```bash
+# Add a new changelog entry (interactive)
+dch -i
+
+# Or specify the new version directly
+dch -v 1.0.3-1 "Description of changes"
+```
+```
+
 ## License
 
 CC0-1.0 (Public Domain Dedication)

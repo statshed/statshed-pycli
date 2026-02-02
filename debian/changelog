@@ -1,5 +1,11 @@
+statdash-cli (1.0.2-1) unstable; urgency=medium
+
+  * Add log upload commands
+
+ -- Sean <jafo00+oss@gmail.com>  Mon, 02 Feb 2026 07:00:00 -0700
+
 statdash-cli (1.0.1-1) unstable; urgency=medium
 
   * Initial release.
 
- -- Sean <sean@realgo.com>  Sat, 18 Jan 2026 07:00:00 -0700
+ -- Sean <jafo00+oss@gmail.com>  Sat, 18 Jan 2026 07:00:00 -0700
