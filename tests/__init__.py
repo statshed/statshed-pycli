@@ -1,1 +1,1 @@
-"""Tests for StatDash CLI."""
+"""Tests for Reporting In CLI."""

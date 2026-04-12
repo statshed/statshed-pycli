@@ -1,4 +1,4 @@
-"""Output formatting for StatDash CLI.
+"""Output formatting for Reporting In CLI.
 
 AIDEV-NOTE: This module provides output abstraction. PlainFormatter is
 always available; RichFormatter is used when Rich is installed and

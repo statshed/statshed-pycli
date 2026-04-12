@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from statdash_cli.output import (
+from reportingin_cli.output import (
     RICH_AVAILABLE,
     JsonFormatter,
     PlainFormatter,

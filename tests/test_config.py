@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from statdash_cli.config import (
+from reportingin_cli.config import (
     Config,
     ConfigError,
     SubmitConfig,
@@ -55,23 +55,23 @@ class TestFindConfigFile:
             _find_config_file("/nonexistent/config.yaml")
 
     def test_env_var_path(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Test STATDASH_CONFIG environment variable."""
+        """Test REPORTINGIN_CONFIG environment variable."""
         config_file = tmp_path / "config.yaml"
         config_file.write_text("url: http://example.com")
 
-        monkeypatch.setenv("STATDASH_CONFIG", str(config_file))
+        monkeypatch.setenv("REPORTINGIN_CONFIG", str(config_file))
         result = _find_config_file()
         assert result == config_file
 
     def test_env_var_not_found(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Test STATDASH_CONFIG with nonexistent file."""
-        monkeypatch.setenv("STATDASH_CONFIG", "/nonexistent/config.yaml")
+        """Test REPORTINGIN_CONFIG with nonexistent file."""
+        monkeypatch.setenv("REPORTINGIN_CONFIG", "/nonexistent/config.yaml")
         with pytest.raises(ConfigError, match="Configuration file not found"):
             _find_config_file()
 
     def test_no_config_found(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test when no config file is found."""
-        monkeypatch.delenv("STATDASH_CONFIG", raising=False)
+        monkeypatch.delenv("REPORTINGIN_CONFIG", raising=False)
         # Ensure we're not in a directory with a config file
         original_cwd = os.getcwd()
         try:
@@ -221,39 +221,39 @@ class TestConfigFromSources:
         """Test that CLI URL overrides config file."""
         config_file = tmp_path / "config.yaml"
         config_file.write_text("url: http://file.example.com")
-        monkeypatch.setenv("STATDASH_CONFIG", str(config_file))
+        monkeypatch.setenv("REPORTINGIN_CONFIG", str(config_file))
 
         config = Config.from_sources(cli_url="http://cli.example.com")
         assert config.url == "http://cli.example.com"
 
     def test_env_url_overrides_file(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Test that STATDASH_URL env var overrides config file."""
+        """Test that REPORTINGIN_URL env var overrides config file."""
         config_file = tmp_path / "config.yaml"
         config_file.write_text("url: http://file.example.com")
-        monkeypatch.setenv("STATDASH_CONFIG", str(config_file))
-        monkeypatch.setenv("STATDASH_URL", "http://env.example.com")
+        monkeypatch.setenv("REPORTINGIN_CONFIG", str(config_file))
+        monkeypatch.setenv("REPORTINGIN_URL", "http://env.example.com")
 
         config = Config.from_sources()
         assert config.url == "http://env.example.com"
 
     def test_cli_url_overrides_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test that CLI URL overrides environment variable."""
-        monkeypatch.setenv("STATDASH_URL", "http://env.example.com")
-        monkeypatch.delenv("STATDASH_CONFIG", raising=False)
+        monkeypatch.setenv("REPORTINGIN_URL", "http://env.example.com")
+        monkeypatch.delenv("REPORTINGIN_CONFIG", raising=False)
 
         config = Config.from_sources(cli_url="http://cli.example.com")
         assert config.url == "http://cli.example.com"
 
     def test_no_color_flag(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test --no-color flag sets color to never."""
-        monkeypatch.delenv("STATDASH_CONFIG", raising=False)
+        monkeypatch.delenv("REPORTINGIN_CONFIG", raising=False)
 
         config = Config.from_sources(cli_no_color=True)
         assert config.color == "never"
 
     def test_json_flag(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test --json flag sets output_format to json."""
-        monkeypatch.delenv("STATDASH_CONFIG", raising=False)
+        monkeypatch.delenv("REPORTINGIN_CONFIG", raising=False)
 
         config = Config.from_sources(cli_json=True)
         assert config.output_format == "json"

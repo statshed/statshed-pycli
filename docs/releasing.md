@@ -1,6 +1,6 @@
-# Releasing StatDash CLI
+# Releasing Reporting In CLI
 
-This document describes the release process for statdash-cli, including version management, changelog updates, and publishing to PyPI and Debian packages.
+This document describes the release process for reportingin-cli, including version management, changelog updates, and publishing to PyPI and Debian packages.
 
 ## Prerequisites
 
@@ -8,11 +8,11 @@ Before releasing, ensure you have:
 - Push access to the GitHub repository
 - Trusted publishing configured on PyPI (see deploy-todo.md Part 1.4)
 - All tests passing locally: `uv run pytest`
-- All linting passing: `uv run ruff check statdash_cli tests`
+- All linting passing: `uv run ruff check reportingin_cli tests`
 
 ## Version Management
 
-StatDash CLI uses **Semantic Versioning** (SemVer):
+Reporting In CLI uses **Semantic Versioning** (SemVer):
 - **MAJOR** (X.0.0): Breaking changes to CLI interface or configuration
 - **MINOR** (0.X.0): New features, new commands, backward-compatible changes
 - **PATCH** (0.0.X): Bug fixes, documentation updates
@@ -26,7 +26,7 @@ The version must be updated in **two places** to stay synchronized:
    version = "X.Y.Z"
    ```
 
-2. **statdash_cli/__init__.py** - Used by `--version` flag:
+2. **reportingin_cli/__init__.py** - Used by `--version` flag:
    ```python
    __version__ = "X.Y.Z"
    ```
@@ -47,7 +47,7 @@ The version must be updated in **two places** to stay synchronized:
 ```bash
 # Edit both files to update version
 # pyproject.toml: version = "X.Y.Z"
-# statdash_cli/__init__.py: __version__ = "X.Y.Z"
+# reportingin_cli/__init__.py: __version__ = "X.Y.Z"
 ```
 
 ### Step 2: Update Changelog
@@ -75,7 +75,7 @@ dch -r ""  # Mark as released (changes UNRELEASED to distro name)
 
 Or manually edit `debian/changelog` with proper format:
 ```
-statdash-cli (X.Y.Z-1) unstable; urgency=medium
+reportingin-cli (X.Y.Z-1) unstable; urgency=medium
 
   * New upstream release.
   * [List specific changes relevant to Debian packaging]
@@ -90,10 +90,10 @@ statdash-cli (X.Y.Z-1) unstable; urgency=medium
 uv run pytest
 
 # Run linting
-uv run ruff check statdash_cli tests
+uv run ruff check reportingin_cli tests
 
 # Run type checking
-uv run mypy statdash_cli
+uv run mypy reportingin_cli
 
 # Test package installation
 ./scripts/test-package.sh
@@ -102,7 +102,7 @@ uv run mypy statdash_cli
 ### Step 5: Commit Release Changes
 
 ```bash
-git add pyproject.toml statdash_cli/__init__.py CHANGELOG.md debian/changelog
+git add pyproject.toml reportingin_cli/__init__.py CHANGELOG.md debian/changelog
 git commit -m "Release v${VERSION}"
 ```
 
@@ -136,30 +136,30 @@ This triggers the automated workflows:
 
 ```bash
 # Wait a few minutes for PyPI to process
-pip install --upgrade statdash-cli
+pip install --upgrade reportingin-cli
 
 # Verify installation
-statdash-cli --version  # Should show new version
+reportingin-cli --version  # Should show new version
 ```
 
 #### GitHub Release Assets
 
 Check that the following artifacts are attached to the release:
-- `statdash_cli-X.Y.Z.tar.gz` (source distribution)
-- `statdash_cli-X.Y.Z-py3-none-any.whl` (wheel)
-- `statdash-cli_X.Y.Z-1_all.deb` (Ubuntu Noble package)
-- `statdash-cli_X.Y.Z-1_all.deb` (Debian Trixie package)
+- `reportingin_cli-X.Y.Z.tar.gz` (source distribution)
+- `reportingin_cli-X.Y.Z-py3-none-any.whl` (wheel)
+- `reportingin-cli_X.Y.Z-1_all.deb` (Ubuntu Noble package)
+- `reportingin-cli_X.Y.Z-1_all.deb` (Debian Trixie package)
 
 #### Debian Package
 
 ```bash
 # Download and install .deb
-wget https://github.com/OWNER/REPO/releases/download/vX.Y.Z/statdash-cli_X.Y.Z-1_all.deb
-sudo dpkg -i statdash-cli_X.Y.Z-1_all.deb
+wget https://github.com/OWNER/REPO/releases/download/vX.Y.Z/reportingin-cli_X.Y.Z-1_all.deb
+sudo dpkg -i reportingin-cli_X.Y.Z-1_all.deb
 sudo apt-get install -f  # Install any missing dependencies
 
 # Verify
-statdash-cli --version
+reportingin-cli --version
 ```
 
 ## Release Candidate Process
@@ -169,7 +169,7 @@ For major releases, consider creating release candidates first:
 ```bash
 # Update version to RC
 # pyproject.toml: version = "2.0.0rc1"
-# statdash_cli/__init__.py: __version__ = "2.0.0rc1"
+# reportingin_cli/__init__.py: __version__ = "2.0.0rc1"
 
 # Commit and tag
 git commit -am "Release v2.0.0-rc1"
@@ -239,20 +239,20 @@ git reset --hard HEAD~1
 ```bash
 # Clear pip cache and reinstall
 pip cache purge
-pip install --no-cache-dir statdash-cli
+pip install --no-cache-dir reportingin-cli
 
 # Install with verbose output for debugging
-pip install -v statdash-cli
+pip install -v reportingin-cli
 ```
 
 ### Debian Package Issues
 
 ```bash
 # Check package info
-dpkg-deb -I statdash-cli_*.deb
+dpkg-deb -I reportingin-cli_*.deb
 
 # Check package contents
-dpkg-deb -c statdash-cli_*.deb
+dpkg-deb -c reportingin-cli_*.deb
 
 # Check for dependency issues
 sudo apt-get install -f

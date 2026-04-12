@@ -9,8 +9,8 @@ import requests
 import responses
 from click.testing import CliRunner
 
-from statdash_cli.errors import ExitCode
-from statdash_cli.main import cli
+from reportingin_cli.errors import ExitCode
+from reportingin_cli.main import cli
 
 
 @pytest.fixture
@@ -204,7 +204,7 @@ submit:
   syslog: true
   syslog_facility: local0
 """)
-        monkeypatch.setenv("STATDASH_CONFIG", str(config_file))
+        monkeypatch.setenv("REPORTINGIN_CONFIG", str(config_file))
 
         responses.add(
             responses.POST,
@@ -212,7 +212,7 @@ submit:
             body=requests.exceptions.ConnectionError("Connection refused"),
         )
 
-        with mock.patch("statdash_cli.logging.log_to_syslog") as mock_syslog:
+        with mock.patch("reportingin_cli.logging.log_to_syslog") as mock_syslog:
             result = runner.invoke(cli, ["submit", "-g", "test", "-j", "test", "-s", "success"])
             # Lenient mode should exit 0
             assert result.exit_code == 0
@@ -555,7 +555,7 @@ class TestCompletionCommand:
         """Test fish completion script generation."""
         result = runner.invoke(cli, ["completion", "fish"])
         assert result.exit_code == 0
-        assert "complete -c statdash-cli" in result.output
+        assert "complete -c reportingin-cli" in result.output
 
     def test_completion_invalid_shell(self, runner: CliRunner) -> None:
         """Test that invalid shell name is rejected."""
@@ -604,6 +604,6 @@ class TestGlobalOptions:
         """Test --help option."""
         result = runner.invoke(cli, ["--help"])
         assert result.exit_code == 0
-        assert "StatDash CLI" in result.output
+        assert "Reporting In CLI" in result.output
         assert "health" in result.output
         assert "submit" in result.output

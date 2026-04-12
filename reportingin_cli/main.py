@@ -1,4 +1,4 @@
-"""StatDash CLI - Command-line interface entry point.
+"""Reporting In CLI - Command-line interface entry point.
 
 AIDEV-NOTE: This is the main CLI module using Click. Global options are
 defined on the cli() group and passed via context to subcommands.
@@ -8,23 +8,23 @@ import sys
 
 import click
 
-from statdash_cli.client import ApiClient
-from statdash_cli.completion import (
+from reportingin_cli.client import ApiClient
+from reportingin_cli.completion import (
     complete_group_names,
     complete_job_names,
     complete_status_values,
     get_completion_script,
 )
-from statdash_cli.config import Config
-from statdash_cli.errors import (
+from reportingin_cli.config import Config
+from reportingin_cli.errors import (
     ConfigError,
     ExitCode,
     NotFoundError,
-    StatDashError,
+    ReportingInError,
     get_exit_code,
 )
-from statdash_cli.logging import log_submit_error
-from statdash_cli.output import JsonFormatter, OutputFormatter, get_formatter
+from reportingin_cli.logging import log_submit_error
+from reportingin_cli.output import JsonFormatter, OutputFormatter, get_formatter
 
 
 class Context:
@@ -66,14 +66,14 @@ pass_context = click.make_pass_decorator(Context, ensure=True)
 @click.option(
     "--url",
     "-u",
-    envvar="STATDASH_URL",
-    help="StatDash API URL",
+    envvar="REPORTINGIN_URL",
+    help="Reporting In API URL",
 )
 @click.option(
     "--config",
     "-c",
     "config_path",
-    envvar="STATDASH_CONFIG",
+    envvar="REPORTINGIN_CONFIG",
     help="Path to config file",
 )
 @click.option(
@@ -93,7 +93,7 @@ pass_context = click.make_pass_decorator(Context, ensure=True)
     is_flag=True,
     help="Output in JSON format",
 )
-@click.version_option(package_name="statdash-cli")
+@click.version_option(package_name="reportingin-cli")
 @pass_context
 def cli(
     ctx: Context,
@@ -103,7 +103,7 @@ def cli(
     no_color: bool,
     json_output: bool,
 ) -> None:
-    """StatDash CLI - Command-line interface for StatDash status dashboard."""
+    """Reporting In CLI - Command-line interface for Reporting In status dashboard."""
     try:
         ctx.config = Config.from_sources(
             config_path=config_path,
@@ -136,7 +136,7 @@ def health(ctx: Context, json_output: bool) -> None:
         if data.get("status") in ("unhealthy",):
             sys.exit(ExitCode.ERROR_UNHEALTHY)
 
-    except StatDashError as e:
+    except ReportingInError as e:
         err_formatter: OutputFormatter = ctx.get_formatter()
         click.echo(err_formatter.error(str(e)), err=True)
         sys.exit(get_exit_code(e))
@@ -205,7 +205,7 @@ def submit(
             if warning:
                 click.echo(f"Warning: {warning}", err=True)
 
-    except StatDashError as e:
+    except ReportingInError as e:
         if use_strict:
             err_formatter: OutputFormatter = ctx.get_formatter()
             click.echo(err_formatter.error(str(e)), err=True)
@@ -232,7 +232,7 @@ def groups(ctx: Context, json_output: bool) -> None:
         )
         ctx.output(formatter.groups(data))
 
-    except StatDashError as e:
+    except ReportingInError as e:
         err_formatter: OutputFormatter = ctx.get_formatter()
         click.echo(err_formatter.error(str(e)), err=True)
         sys.exit(get_exit_code(e))
@@ -257,7 +257,7 @@ def jobs(ctx: Context, group_name: str, json_output: bool) -> None:
         err_formatter: OutputFormatter = ctx.get_formatter()
         click.echo(err_formatter.error(f"Group '{group_name}' not found"), err=True)
         sys.exit(ExitCode.ERROR_NOT_FOUND)
-    except StatDashError as e:
+    except ReportingInError as e:
         err_formatter2: OutputFormatter = ctx.get_formatter()
         click.echo(err_formatter2.error(str(e)), err=True)
         sys.exit(get_exit_code(e))
@@ -296,7 +296,7 @@ def config_cmd(
         )
         ctx.output(formatter.config(data))
 
-    except StatDashError as e:
+    except ReportingInError as e:
         err_formatter: OutputFormatter = ctx.get_formatter()
         click.echo(err_formatter.error(str(e)), err=True)
         sys.exit(get_exit_code(e))
@@ -354,7 +354,7 @@ def group_config_cmd(
         err_formatter: OutputFormatter = ctx.get_formatter()
         click.echo(err_formatter.error(f"Group '{group_name}' not found"), err=True)
         sys.exit(ExitCode.ERROR_NOT_FOUND)
-    except StatDashError as e:
+    except ReportingInError as e:
         err_formatter2: OutputFormatter = ctx.get_formatter()
         click.echo(err_formatter2.error(str(e)), err=True)
         sys.exit(get_exit_code(e))
@@ -369,9 +369,9 @@ def completion(shell: str) -> None:
     Install by redirecting output to the appropriate location:
 
     \b
-    Bash: statdash-cli completion bash > ~/.local/share/bash-completion/completions/statdash-cli
-    Zsh:  statdash-cli completion zsh > ~/.zfunc/_statdash-cli
-    Fish: statdash-cli completion fish > ~/.config/fish/completions/statdash-cli.fish
+    Bash: reportingin-cli completion bash > ~/.local/share/bash-completion/completions/reportingin-cli
+    Zsh:  reportingin-cli completion zsh > ~/.zfunc/_reportingin-cli
+    Fish: reportingin-cli completion fish > ~/.config/fish/completions/reportingin-cli.fish
     """
     script = get_completion_script(shell)
     click.echo(script)

@@ -1,4 +1,4 @@
-"""Shell completion utilities for StatDash CLI.
+"""Shell completion utilities for Reporting In CLI.
 
 AIDEV-NOTE: This module provides shell completion script generation and
 dynamic completions for group/job names. The dynamic completions query
@@ -16,17 +16,17 @@ if TYPE_CHECKING:
 
 
 # AIDEV-NOTE: Click provides built-in shell completion. These templates
-# extend the basic completion with StatDash-specific enhancements.
+# extend the basic completion with Reporting In-specific enhancements.
 
 BASH_COMPLETION_SCRIPT = """
-# StatDash CLI Bash completion
-# Install: statdash-cli completion bash > ~/.local/share/bash-completion/completions/statdash-cli
+# Reporting In CLI Bash completion
+# Install: reportingin-cli completion bash > ~/.local/share/bash-completion/completions/reportingin-cli
 
-_statdash_cli_completion() {
+_reportingin_cli_completion() {
     local IFS=$'\\n'
     local response
 
-    response=$(env COMP_WORDS="${COMP_WORDS[*]}" COMP_CWORD=$COMP_CWORD _STATDASH_CLI_COMPLETE=bash_complete $1)
+    response=$(env COMP_WORDS="${COMP_WORDS[*]}" COMP_CWORD=$COMP_CWORD _REPORTINGIN_CLI_COMPLETE=bash_complete $1)
 
     for completion in $response; do
         IFS=',' read type value <<< "$completion"
@@ -36,21 +36,21 @@ _statdash_cli_completion() {
     return 0
 }
 
-complete -o default -F _statdash_cli_completion statdash-cli
+complete -o default -F _reportingin_cli_completion reportingin-cli
 """
 
 ZSH_COMPLETION_SCRIPT = """
-#compdef statdash-cli
-# StatDash CLI Zsh completion
-# Install: statdash-cli completion zsh > ~/.zfunc/_statdash-cli
+#compdef reportingin-cli
+# Reporting In CLI Zsh completion
+# Install: reportingin-cli completion zsh > ~/.zfunc/_reportingin-cli
 
-_statdash_cli() {
+_reportingin_cli() {
     local -a completions
     local -a completions_with_descriptions
     local -a response
-    (( ! $+commands[statdash-cli] )) && return 1
+    (( ! $+commands[reportingin-cli] )) && return 1
 
-    response=("${(@f)$(env COMP_WORDS="${words[*]}" COMP_CWORD=$((CURRENT-1)) _STATDASH_CLI_COMPLETE=zsh_complete statdash-cli)}")
+    response=("${(@f)$(env COMP_WORDS="${words[*]}" COMP_CWORD=$((CURRENT-1)) _REPORTINGIN_CLI_COMPLETE=zsh_complete reportingin-cli)}")
 
     for key descr in ${(kv)response}; do
         if [[ "$descr" == "_" ]]; then
@@ -69,15 +69,15 @@ _statdash_cli() {
     fi
 }
 
-compdef _statdash_cli statdash-cli
+compdef _reportingin_cli reportingin-cli
 """
 
 FISH_COMPLETION_SCRIPT = """
-# StatDash CLI Fish completion
-# Install: statdash-cli completion fish > ~/.config/fish/completions/statdash-cli.fish
+# Reporting In CLI Fish completion
+# Install: reportingin-cli completion fish > ~/.config/fish/completions/reportingin-cli.fish
 
-function _statdash_cli_completion
-    set -l response (env _STATDASH_CLI_COMPLETE=fish_complete COMP_WORDS=(commandline -cp) COMP_CWORD=(commandline -t) statdash-cli)
+function _reportingin_cli_completion
+    set -l response (env _REPORTINGIN_CLI_COMPLETE=fish_complete COMP_WORDS=(commandline -cp) COMP_CWORD=(commandline -t) reportingin-cli)
 
     for completion in $response
         set -l metadata (string split "," -- $completion)
@@ -92,7 +92,7 @@ function _statdash_cli_completion
     end
 end
 
-complete -c statdash-cli -f -a "(_statdash_cli_completion)"
+complete -c reportingin-cli -f -a "(_reportingin_cli_completion)"
 """
 
 
@@ -132,9 +132,9 @@ def _get_api_url() -> str:
     """
     import os
 
-    from statdash_cli.config import DEFAULT_URL
+    from reportingin_cli.config import DEFAULT_URL
 
-    return os.environ.get("STATDASH_URL", DEFAULT_URL)
+    return os.environ.get("REPORTINGIN_URL", DEFAULT_URL)
 
 
 def complete_group_names(

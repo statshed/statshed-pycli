@@ -1,10 +1,10 @@
-# StatDash CLI - Design Document
+# Reporting In CLI - Design Document
 
-A command-line interface for interacting with the StatDash status dashboard API.
+A command-line interface for interacting with the Reporting In status dashboard API.
 
 ## Overview
 
-The StatDash CLI (`statdash-cli`) provides a robust command-line interface for submitting job statuses and querying the StatDash dashboard. It is designed to work equally well in interactive terminal sessions, CI/CD pipelines, cron jobs, and shell scripts.
+The Reporting In CLI (`reportingin-cli`) provides a robust command-line interface for submitting job statuses and querying the Reporting In dashboard. It is designed to work equally well in interactive terminal sessions, CI/CD pipelines, cron jobs, and shell scripts.
 
 ## Technology Stack
 
@@ -22,7 +22,7 @@ The StatDash CLI (`statdash-cli`) provides a robust command-line interface for s
 
 ```
 cli/
-├── statdash_cli/
+├── reportingin_cli/
 │   ├── __init__.py
 │   ├── main.py              # CLI entry point and commands
 │   ├── client.py            # API client
@@ -46,8 +46,8 @@ cli/
 
 | Option | Short | Environment Variable | Description |
 |--------|-------|---------------------|-------------|
-| `--url` | `-u` | `STATDASH_URL` | StatDash API URL (default: from config or `http://localhost:7828`) |
-| `--config` | `-c` | `STATDASH_CONFIG` | Path to config file |
+| `--url` | `-u` | `REPORTINGIN_URL` | Reporting In API URL (default: from config or `http://localhost:7828`) |
+| `--config` | `-c` | `REPORTINGIN_CONFIG` | Path to config file |
 | `--quiet` | `-q` | - | Suppress non-error output |
 | `--no-color` | - | `NO_COLOR` | Disable colored output |
 | `--json` | - | - | Output in JSON format (where applicable) |
@@ -57,7 +57,7 @@ cli/
 #### `submit` - Submit Job Status
 
 ```bash
-statdash-cli submit --group <name> --job <name> --status <status> [--message <msg>]
+reportingin-cli submit --group <name> --job <name> --status <status> [--message <msg>]
 ```
 
 | Option | Short | Required | Description |
@@ -76,7 +76,7 @@ statdash-cli submit --group <name> --job <name> --status <status> [--message <ms
 #### `health` - System Health Summary
 
 ```bash
-statdash-cli health [--json]
+reportingin-cli health [--json]
 ```
 
 Returns overall system health status. Exits with code 1 if unhealthy.
@@ -84,7 +84,7 @@ Returns overall system health status. Exits with code 1 if unhealthy.
 #### `groups` - List Groups
 
 ```bash
-statdash-cli groups [--json]
+reportingin-cli groups [--json]
 ```
 
 Lists all groups with health summaries.
@@ -92,7 +92,7 @@ Lists all groups with health summaries.
 #### `jobs` - List Jobs in Group
 
 ```bash
-statdash-cli jobs <group_name> [--json]
+reportingin-cli jobs <group_name> [--json]
 ```
 
 Lists all jobs within a specific group.
@@ -101,10 +101,10 @@ Lists all jobs within a specific group.
 
 ```bash
 # View global config
-statdash-cli config
+reportingin-cli config
 
 # Update global config
-statdash-cli config --progress-timeout <minutes> --staleness-timeout <hours>
+reportingin-cli config --progress-timeout <minutes> --staleness-timeout <hours>
 ```
 
 | Option | Short | Description |
@@ -117,13 +117,13 @@ statdash-cli config --progress-timeout <minutes> --staleness-timeout <hours>
 
 ```bash
 # View group config
-statdash-cli group-config <group_name>
+reportingin-cli group-config <group_name>
 
 # Update group config
-statdash-cli group-config <group_name> --progress-timeout <minutes>
+reportingin-cli group-config <group_name> --progress-timeout <minutes>
 
 # Reset to global defaults
-statdash-cli group-config <group_name> --reset-progress-timeout --reset-staleness-timeout
+reportingin-cli group-config <group_name> --reset-progress-timeout --reset-staleness-timeout
 ```
 
 | Option | Short | Description |
@@ -138,24 +138,24 @@ statdash-cli group-config <group_name> --reset-progress-timeout --reset-stalenes
 
 ```bash
 # Generate completion script
-statdash-cli completion bash > ~/.local/share/bash-completion/completions/statdash-cli
-statdash-cli completion zsh > ~/.zfunc/_statdash-cli
-statdash-cli completion fish > ~/.config/fish/completions/statdash-cli.fish
+reportingin-cli completion bash > ~/.local/share/bash-completion/completions/reportingin-cli
+reportingin-cli completion zsh > ~/.zfunc/_reportingin-cli
+reportingin-cli completion fish > ~/.config/fish/completions/reportingin-cli.fish
 ```
 
 ## Configuration File
 
 The CLI reads configuration from the following locations (in order of precedence):
 
-1. Path specified via `--config` or `STATDASH_CONFIG`
-2. `./statdash-cli.yaml` (current directory)
-3. `~/.config/statdash/statdash.yaml`
-4. `/etc/statdash/statdash.yaml`
+1. Path specified via `--config` or `REPORTINGIN_CONFIG`
+2. `./reportingin-cli.yaml` (current directory)
+3. `~/.config/reportingin/reportingin.yaml`
+4. `/etc/reportingin/reportingin.yaml`
 
 ### Configuration Schema
 
 ```yaml
-# StatDash CLI Configuration
+# Reporting In CLI Configuration
 
 # API server URL
 url: http://localhost:7828
@@ -202,7 +202,7 @@ timeout: 10
 ### Plain Mode (default when Rich not installed or `--no-color`)
 
 ```
-$ statdash-cli health
+$ reportingin-cli health
 System Health: ✅ HEALTHY
 Total Jobs: 10
   Healthy: 8
@@ -249,7 +249,7 @@ Refactor the existing CLI to support the new architecture and add configuration 
 - [X] Implement config file discovery (check paths in order of precedence)
 - [X] Implement YAML config file parser with schema validation
 - [X] Add `--config` global option to specify config file path
-- [X] Support `STATDASH_CONFIG` environment variable
+- [X] Support `REPORTINGIN_CONFIG` environment variable
 - [X] Merge config sources: defaults < config file < env vars < CLI args
 - [X] Add helpful error messages for invalid config files
 
@@ -300,7 +300,7 @@ Enhance user experience with optional rich terminal output and shell completion.
 
 #### Rich Terminal Output
 
-- [X] Add Rich as optional dependency (`pip install statdash-cli[rich]`)
+- [X] Add Rich as optional dependency (`pip install reportingin-cli[rich]`)
 - [X] Create `output.py` module with output abstraction
 - [X] Implement `PlainFormatter` class for basic output
 - [X] Implement `RichFormatter` class for styled output
@@ -393,7 +393,7 @@ jobs:
     steps:
       - name: Report build start
         run: |
-          statdash-cli submit -g ci-builds -j "${{ github.repository }}" \
+          reportingin-cli submit -g ci-builds -j "${{ github.repository }}" \
             -s progress -m "Build started: ${{ github.sha }}"
 
       - name: Build
@@ -402,13 +402,13 @@ jobs:
       - name: Report build success
         if: success()
         run: |
-          statdash-cli submit -g ci-builds -j "${{ github.repository }}" \
+          reportingin-cli submit -g ci-builds -j "${{ github.repository }}" \
             -s success -m "Build passed: ${{ github.sha }}"
 
       - name: Report build failure
         if: failure()
         run: |
-          statdash-cli submit -g ci-builds -j "${{ github.repository }}" \
+          reportingin-cli submit -g ci-builds -j "${{ github.repository }}" \
             -s error -m "Build failed: ${{ github.sha }}"
 ```
 
@@ -419,13 +419,13 @@ jobs:
 set -eu
 
 # Submit commands won't cause script to exit on API errors
-statdash-cli submit -g backups -j database -s progress -m "Starting backup"
+reportingin-cli submit -g backups -j database -s progress -m "Starting backup"
 
 # Do the actual backup
 pg_dump mydb > /backups/mydb.sql
 
 # Report success
-statdash-cli submit -g backups -j database -s success -m "Backup completed"
+reportingin-cli submit -g backups -j database -s success -m "Backup completed"
 ```
 
 ### Cron Job with Strict Error Handling
@@ -434,7 +434,7 @@ statdash-cli submit -g backups -j database -s success -m "Backup completed"
 #!/bin/bash
 # No set -eu, handle errors manually
 
-if ! statdash-cli submit --strict -g backups -j database -s progress; then
+if ! reportingin-cli submit --strict -g backups -j database -s progress; then
     echo "Warning: Could not report status to dashboard"
 fi
 
@@ -442,9 +442,9 @@ pg_dump mydb > /backups/mydb.sql
 backup_status=$?
 
 if [ $backup_status -eq 0 ]; then
-    statdash-cli submit -g backups -j database -s success
+    reportingin-cli submit -g backups -j database -s success
 else
-    statdash-cli submit -g backups -j database -s error -m "Backup failed with code $backup_status"
+    reportingin-cli submit -g backups -j database -s error -m "Backup failed with code $backup_status"
 fi
 ```
 
@@ -452,26 +452,26 @@ fi
 
 ```bash
 # Check overall health with rich output
-$ statdash-cli health
+$ reportingin-cli health
 
 # List groups with status summary
-$ statdash-cli groups
+$ reportingin-cli groups
 
 # Drill into a specific group
-$ statdash-cli jobs nightly-builds
+$ reportingin-cli jobs nightly-builds
 
 # Check group-specific timeout configuration
-$ statdash-cli group-config nightly-builds
+$ reportingin-cli group-config nightly-builds
 
 # Update group timeout (builds can take longer)
-$ statdash-cli group-config nightly-builds --progress-timeout 30
+$ reportingin-cli group-config nightly-builds --progress-timeout 30
 ```
 
 ### Configuration File Example
 
 ```yaml
-# ~/.config/statdash/statdash.yaml
-url: https://statdash.internal.example.com
+# ~/.config/reportingin/reportingin.yaml
+url: https://reportingin.internal.example.com
 color: auto
 timeout: 30
 

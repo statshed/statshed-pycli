@@ -1,7 +1,7 @@
 #!/bin/bash
 # test-package.sh - Test package installation in an isolated environment
 #
-# This script builds and tests the statdash-cli package to verify:
+# This script builds and tests the reportingin-cli package to verify:
 # - Package builds correctly
 # - Installs successfully in a fresh environment
 # - Entry points work as expected
@@ -64,20 +64,20 @@ WHEEL=$(ls dist/*.whl)
 VIRTUAL_ENV="$TEST_VENV" uv pip install "$WHEEL" --quiet
 
 # Test basic entry point
-info "Testing entry point: statdash-cli --help"
-"$TEST_VENV/bin/statdash-cli" --help > /dev/null
+info "Testing entry point: reportingin-cli --help"
+"$TEST_VENV/bin/reportingin-cli" --help > /dev/null
 
-info "Testing entry point: statdash-cli --version"
-VERSION=$("$TEST_VENV/bin/statdash-cli" --version)
+info "Testing entry point: reportingin-cli --version"
+VERSION=$("$TEST_VENV/bin/reportingin-cli" --version)
 echo "  Version: $VERSION"
 
 # Test all commands
 info "Testing commands..."
 for cmd in submit health groups jobs config group-config completion; do
-    if "$TEST_VENV/bin/statdash-cli" "$cmd" --help > /dev/null 2>&1; then
-        echo "  ✓ statdash-cli $cmd --help"
+    if "$TEST_VENV/bin/reportingin-cli" "$cmd" --help > /dev/null 2>&1; then
+        echo "  ✓ reportingin-cli $cmd --help"
     else
-        error "Failed: statdash-cli $cmd --help"
+        error "Failed: reportingin-cli $cmd --help"
         exit 1
     fi
 done
@@ -86,14 +86,14 @@ done
 # AIDEV-NOTE: pip ignores extras on local wheel paths, so install rich directly
 info "Testing installation with rich dependency..."
 VIRTUAL_ENV="$TEST_VENV" uv pip install rich --quiet
-"$TEST_VENV/bin/statdash-cli" --help > /dev/null
+"$TEST_VENV/bin/reportingin-cli" --help > /dev/null
 echo "  ✓ Works with rich installed"
 
 # Test shell completion generation
 info "Testing shell completion generation..."
 for shell in bash zsh fish; do
-    if "$TEST_VENV/bin/statdash-cli" completion "$shell" > /dev/null 2>&1; then
-        echo "  ✓ statdash-cli completion $shell"
+    if "$TEST_VENV/bin/reportingin-cli" completion "$shell" > /dev/null 2>&1; then
+        echo "  ✓ reportingin-cli completion $shell"
     else
         warn "Shell completion for $shell not available (may require shell to be installed)"
     fi

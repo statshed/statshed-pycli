@@ -1,18 +1,18 @@
-# StatDash CLI
+# Reporting In CLI
 
-[![Tests](https://github.com/statdash/statdash-cli/actions/workflows/test.yml/badge.svg)](https://github.com/statdash/statdash-cli/actions/workflows/test.yml)
+[![Tests](https://github.com/reportingin/reportingin-cli/actions/workflows/test.yml/badge.svg)](https://github.com/reportingin/reportingin-cli/actions/workflows/test.yml)
 
-Command-line interface for the StatDash status dashboard.
+Command-line interface for the Reporting In status dashboard.
 
 ## Installation
 
 ```bash
-pip install statdash-cli
+pip install reportingin-cli
 ```
 
 For rich terminal output:
 ```bash
-pip install statdash-cli[rich]
+pip install reportingin-cli[rich]
 ```
 
 ## Usage
@@ -21,57 +21,57 @@ pip install statdash-cli[rich]
 
 ```bash
 # Submit a success status
-statdash-cli submit -g nightly-builds -j backend-tests -s success -m "All tests passed"
+reportingin-cli submit -g nightly-builds -j backend-tests -s success -m "All tests passed"
 
 # Submit an error status
-statdash-cli submit -g nightly-builds -j backend-tests -s error -m "3 tests failed"
+reportingin-cli submit -g nightly-builds -j backend-tests -s error -m "3 tests failed"
 
 # Submit a progress status
-statdash-cli submit -g nightly-builds -j backend-tests -s progress -m "Running tests..."
+reportingin-cli submit -g nightly-builds -j backend-tests -s progress -m "Running tests..."
 ```
 
 ### Check System Health
 
 ```bash
-statdash-cli health
+reportingin-cli health
 ```
 
 ### List Groups
 
 ```bash
-statdash-cli groups
+reportingin-cli groups
 ```
 
 ### List Jobs in a Group
 
 ```bash
-statdash-cli jobs nightly-builds
+reportingin-cli jobs nightly-builds
 ```
 
 ### View/Update Configuration
 
 ```bash
 # View global config
-statdash-cli config
+reportingin-cli config
 
 # Update global config
-statdash-cli config --progress-timeout 10 --staleness-timeout 48
+reportingin-cli config --progress-timeout 10 --staleness-timeout 48
 
 # View group config
-statdash-cli group-config nightly-builds
+reportingin-cli group-config nightly-builds
 
 # Update group config
-statdash-cli group-config nightly-builds --progress-timeout 15
+reportingin-cli group-config nightly-builds --progress-timeout 15
 ```
 
 ## Configuration File
 
 The CLI reads configuration from these locations (in order of precedence):
 
-1. Path specified via `--config` or `STATDASH_CONFIG` environment variable
-2. `./statdash-cli.yaml` (current directory)
-3. `~/.config/statdash/statdash.yaml`
-4. `/etc/statdash/statdash.yaml`
+1. Path specified via `--config` or `REPORTINGIN_CONFIG` environment variable
+2. `./reportingin-cli.yaml` (current directory)
+3. `~/.config/reportingin/reportingin.yaml`
+4. `/etc/reportingin/reportingin.yaml`
 
 Example configuration:
 
@@ -88,8 +88,8 @@ submit:
 
 ## Environment Variables
 
-- `STATDASH_URL`: API server URL
-- `STATDASH_CONFIG`: Path to configuration file
+- `REPORTINGIN_URL`: API server URL
+- `REPORTINGIN_CONFIG`: Path to configuration file
 - `NO_COLOR`: Disable colored output
 
 ## Exit Codes
@@ -107,7 +107,7 @@ submit:
 
 ## Shell Completion
 
-StatDash CLI provides shell completion for Bash, Zsh, and Fish. The completion includes:
+Reporting In CLI provides shell completion for Bash, Zsh, and Fish. The completion includes:
 
 - Command and option names
 - Dynamic group name completion (queries the API)
@@ -122,10 +122,10 @@ StatDash CLI provides shell completion for Bash, Zsh, and Fish. The completion i
 mkdir -p ~/.local/share/bash-completion/completions
 
 # Generate and install the completion script
-statdash-cli completion bash > ~/.local/share/bash-completion/completions/statdash-cli
+reportingin-cli completion bash > ~/.local/share/bash-completion/completions/reportingin-cli
 
 # Reload your shell or source the file
-source ~/.local/share/bash-completion/completions/statdash-cli
+source ~/.local/share/bash-completion/completions/reportingin-cli
 ```
 
 **Zsh:**
@@ -138,7 +138,7 @@ mkdir -p ~/.zfunc
 # autoload -Uz compinit && compinit
 
 # Generate and install the completion script
-statdash-cli completion zsh > ~/.zfunc/_statdash-cli
+reportingin-cli completion zsh > ~/.zfunc/_reportingin-cli
 
 # Reload completions
 autoload -Uz compinit && compinit
@@ -150,20 +150,20 @@ autoload -Uz compinit && compinit
 mkdir -p ~/.config/fish/completions
 
 # Generate and install the completion script
-statdash-cli completion fish > ~/.config/fish/completions/statdash-cli.fish
+reportingin-cli completion fish > ~/.config/fish/completions/reportingin-cli.fish
 ```
 
 ### Dynamic Completion
 
-The shell completion queries the StatDash API to provide contextual suggestions:
+The shell completion queries the Reporting In API to provide contextual suggestions:
 
 - When completing group names (`--group` or group arguments), available groups are fetched from the server
 - When completing job names (`--job`), jobs from the specified group are fetched
 - If the server is unavailable, completion falls back to basic suggestions
 
-Set `STATDASH_URL` environment variable if your server is not at the default location:
+Set `REPORTINGIN_URL` environment variable if your server is not at the default location:
 ```bash
-export STATDASH_URL=https://statdash.example.com
+export REPORTINGIN_URL=https://reportingin.example.com
 ```
 
 ## Common Use Cases
@@ -176,7 +176,7 @@ jobs:
     steps:
       - name: Report build start
         run: |
-          statdash-cli submit -g ci-builds -j "${{ github.repository }}" \
+          reportingin-cli submit -g ci-builds -j "${{ github.repository }}" \
             -s progress -m "Build started: ${{ github.sha }}"
 
       - name: Build
@@ -185,13 +185,13 @@ jobs:
       - name: Report build success
         if: success()
         run: |
-          statdash-cli submit -g ci-builds -j "${{ github.repository }}" \
+          reportingin-cli submit -g ci-builds -j "${{ github.repository }}" \
             -s success -m "Build passed: ${{ github.sha }}"
 
       - name: Report build failure
         if: failure()
         run: |
-          statdash-cli submit -g ci-builds -j "${{ github.repository }}" \
+          reportingin-cli submit -g ci-builds -j "${{ github.repository }}" \
             -s error -m "Build failed: ${{ github.sha }}"
 ```
 
@@ -204,13 +204,13 @@ For safe use with `set -eu` (script exits on error), use the default lenient mod
 set -eu
 
 # Submit commands won't cause script to exit on API errors
-statdash-cli submit -g backups -j database -s progress -m "Starting backup"
+reportingin-cli submit -g backups -j database -s progress -m "Starting backup"
 
 # Do the actual backup
 pg_dump mydb > /backups/mydb.sql
 
 # Report success
-statdash-cli submit -g backups -j database -s success -m "Backup completed"
+reportingin-cli submit -g backups -j database -s success -m "Backup completed"
 ```
 
 For manual error handling with strict mode:
@@ -218,7 +218,7 @@ For manual error handling with strict mode:
 ```bash
 #!/bin/bash
 
-if ! statdash-cli submit --strict -g backups -j database -s progress; then
+if ! reportingin-cli submit --strict -g backups -j database -s progress; then
     echo "Warning: Could not report status to dashboard"
 fi
 
@@ -226,9 +226,9 @@ pg_dump mydb > /backups/mydb.sql
 backup_status=$?
 
 if [ $backup_status -eq 0 ]; then
-    statdash-cli submit -g backups -j database -s success
+    reportingin-cli submit -g backups -j database -s success
 else
-    statdash-cli submit -g backups -j database -s error -m "Backup failed with code $backup_status"
+    reportingin-cli submit -g backups -j database -s error -m "Backup failed with code $backup_status"
 fi
 ```
 
@@ -236,19 +236,19 @@ fi
 
 ```bash
 # Check overall health with rich output
-$ statdash-cli health
+$ reportingin-cli health
 
 # List groups with status summary
-$ statdash-cli groups
+$ reportingin-cli groups
 
 # Drill into a specific group
-$ statdash-cli jobs nightly-builds
+$ reportingin-cli jobs nightly-builds
 
 # Check group-specific timeout configuration
-$ statdash-cli group-config nightly-builds
+$ reportingin-cli group-config nightly-builds
 
 # Update group timeout (builds can take longer)
-$ statdash-cli group-config nightly-builds --progress-timeout 30
+$ reportingin-cli group-config nightly-builds --progress-timeout 30
 ```
 
 ### Script Integration with Error Logging to Syslog
@@ -256,8 +256,8 @@ $ statdash-cli group-config nightly-builds --progress-timeout 30
 Enable syslog logging for daemon/cron scenarios where stderr may not be monitored:
 
 ```yaml
-# ~/.config/statdash/statdash.yaml
-url: https://statdash.example.com
+# ~/.config/reportingin/reportingin.yaml
+url: https://reportingin.example.com
 submit:
   syslog: true
   syslog_facility: local0
@@ -271,12 +271,12 @@ submit:
 Error: Could not connect to http://localhost:7828: Connection refused
 ```
 
-**Cause**: The StatDash backend is not running or is running on a different port.
+**Cause**: The Reporting In backend is not running or is running on a different port.
 
 **Solution**:
 - Verify the backend is running: `curl http://localhost:7828/health`
 - Check the URL with `--url` or in config file
-- Set `STATDASH_URL` environment variable
+- Set `REPORTINGIN_URL` environment variable
 
 ### Request Timeout
 
@@ -301,7 +301,7 @@ Error: Group 'nonexistent' not found
 
 **Solution**:
 - Groups are auto-created on first status submission
-- Submit a status to create the group: `statdash-cli submit -g newgroup -j newjob -s success`
+- Submit a status to create the group: `reportingin-cli submit -g newgroup -j newjob -s success`
 
 ### Invalid Configuration File
 
@@ -335,7 +335,7 @@ uv sync --extra dev
 pytest
 
 # Run tests with coverage
-pytest --cov=statdash_cli
+pytest --cov=reportingin_cli
 
 # Format code
 ruff format .
@@ -344,7 +344,7 @@ ruff format .
 ruff check .
 
 # Type check
-mypy statdash_cli
+mypy reportingin_cli
 ```
 
 ## Building a Debian Package
@@ -366,7 +366,7 @@ The built `.deb` file will be placed in the parent directory (`../`).
 ### Installing the Package
 
 ```bash
-sudo dpkg -i ../statdash-cli_*.deb
+sudo dpkg -i ../reportingin-cli_*.deb
 
 # Install any missing dependencies
 sudo apt install -f

@@ -1,4 +1,4 @@
-"""Integration tests for StatDash CLI against the real backend.
+"""Integration tests for Reporting In CLI against the real backend.
 
 AIDEV-NOTE: These tests require the backend to be available. They test the CLI
 against a real Flask test server to verify end-to-end functionality. The tests
@@ -23,8 +23,8 @@ BACKEND_PATH = Path(__file__).parent.parent.parent.parent / "backend"
 if BACKEND_PATH.exists():
     sys.path.insert(0, str(BACKEND_PATH))
 
-from statdash_cli.errors import ExitCode  # noqa: E402
-from statdash_cli.main import cli  # noqa: E402
+from reportingin_cli.errors import ExitCode  # noqa: E402
+from reportingin_cli.main import cli  # noqa: E402
 
 
 def _find_free_port() -> int:
@@ -60,7 +60,7 @@ def integration_server() -> Generator[tuple[str, Any], None, None]:
     port = _find_free_port()
 
     # Clean up any leftover test database
-    test_db_path = BACKEND_PATH / "test_statdash.db"
+    test_db_path = BACKEND_PATH / "test_reportingin.db"
     if test_db_path.exists():
         os.remove(test_db_path)
 

@@ -1,4 +1,4 @@
-Source: statdash-cli
+Source: reportingin-cli
 Section: utils
 Priority: optional
 Maintainer: Sean <sean@realgo.com>
@@ -9,12 +9,12 @@ Build-Depends: debhelper-compat (= 13),
                pybuild-plugin-pyproject,
                python3-responses
 Standards-Version: 4.6.2
-Homepage: https://github.com/statdash/statdash-cli
-Vcs-Git: https://github.com/statdash/statdash-cli.git
-Vcs-Browser: https://github.com/statdash/statdash-cli
+Homepage: https://github.com/reportingin/reportingin-cli
+Vcs-Git: https://github.com/reportingin/reportingin-cli.git
+Vcs-Browser: https://github.com/reportingin/reportingin-cli
 Rules-Requires-Root: no
 
-Package: statdash-cli
+Package: reportingin-cli
 Architecture: all
 Depends: ${python3:Depends},
          ${misc:Depends},
@@ -22,8 +22,8 @@ Depends: ${python3:Depends},
          python3-requests,
          python3-yaml
 Suggests: python3-rich
-Description: Command-line interface for StatDash status dashboard
- StatDash CLI provides commands for interacting with the StatDash status
+Description: Command-line interface for Reporting In status dashboard
+ Reporting In CLI provides commands for interacting with the Reporting In status
  dashboard from the command line:
  .
   - submit: Report job status (success, error, progress)

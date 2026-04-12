@@ -1,4 +1,4 @@
-"""Error handling and exit codes for StatDash CLI.
+"""Error handling and exit codes for Reporting In CLI.
 
 AIDEV-NOTE: Exit codes follow a specific scheme:
 - 0: Success
@@ -28,8 +28,8 @@ class ExitCode(IntEnum):
     ERROR_NOT_FOUND = 11  # Resource not found (group, job)
 
 
-class StatDashError(Exception):
-    """Base exception for StatDash CLI errors."""
+class ReportingInError(Exception):
+    """Base exception for Reporting In CLI errors."""
 
     exit_code: ExitCode = ExitCode.ERROR_API
 
@@ -39,25 +39,25 @@ class StatDashError(Exception):
             self.exit_code = exit_code
 
 
-class ConfigError(StatDashError):
+class ConfigError(ReportingInError):
     """Configuration file error."""
 
     exit_code = ExitCode.ERROR_CONFIG
 
 
-class ConnectionError(StatDashError):
+class ConnectionError(ReportingInError):
     """Could not connect to the server."""
 
     exit_code = ExitCode.ERROR_CONNECTION
 
 
-class TimeoutError(StatDashError):
+class TimeoutError(ReportingInError):
     """Request timed out."""
 
     exit_code = ExitCode.ERROR_TIMEOUT
 
 
-class ApiError(StatDashError):
+class ApiError(ReportingInError):
     """API returned an error response."""
 
     exit_code = ExitCode.ERROR_API
@@ -69,13 +69,13 @@ class ApiError(StatDashError):
         self.status_code = status_code
 
 
-class NotFoundError(StatDashError):
+class NotFoundError(ReportingInError):
     """Resource not found."""
 
     exit_code = ExitCode.ERROR_NOT_FOUND
 
 
-class InvalidArgsError(StatDashError):
+class InvalidArgsError(ReportingInError):
     """Invalid command arguments."""
 
     exit_code = ExitCode.ERROR_INVALID_ARGS
@@ -83,6 +83,6 @@ class InvalidArgsError(StatDashError):
 
 def get_exit_code(error: Exception) -> int:
     """Map an exception to an exit code."""
-    if isinstance(error, StatDashError):
+    if isinstance(error, ReportingInError):
         return error.exit_code
     return ExitCode.ERROR_API
