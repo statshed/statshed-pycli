@@ -603,6 +603,386 @@ class TestStreamCommand:
         assert "Invalid value" in result.output
 
 
+class TestWrapCommand:
+    """Test the wrap command.
+
+    AIDEV-NOTE: These are end-to-end tests exercising real subprocess execution
+    via ``sh -c``. Because the child's stdout/stderr are genuine pipes, the
+    selector loop in ``wrap.run_wrapped`` runs exactly as in production. We use
+    ``--min-time 0`` so each line is submitted immediately (no debounce window
+    to drive manually).
+    """
+
+    @responses.activate
+    def test_wrap_submits_stdout_and_stderr(self, runner: CliRunner) -> None:
+        responses.add(
+            responses.POST,
+            "http://localhost:7828/status",
+            json={"success": True, "job": {"status": "progress"}},
+            status=201,
+        )
+
+        result = runner.invoke(
+            cli,
+            [
+                "wrap",
+                "-g",
+                "g",
+                "-j",
+                "j",
+                "--min-time",
+                "0",
+                "--",
+                "sh",
+                "-c",
+                "echo out-line; echo err-line >&2",
+            ],
+        )
+
+        assert result.exit_code == 0
+        bodies = [json.loads(call.request.body) for call in responses.calls]
+        messages = {b["message"] for b in bodies}
+        assert messages == {"out-line", "err-line"}
+        assert all(b["status"] == "progress" for b in bodies)
+
+    @responses.activate
+    def test_wrap_echoes_stdout_and_stderr(self, runner: CliRunner) -> None:
+        responses.add(
+            responses.POST,
+            "http://localhost:7828/status",
+            json={"success": True, "job": {"status": "progress"}},
+            status=201,
+        )
+
+        result = runner.invoke(
+            cli,
+            [
+                "wrap",
+                "-g",
+                "g",
+                "-j",
+                "j",
+                "--min-time",
+                "0",
+                "--",
+                "sh",
+                "-c",
+                "echo hello; echo world >&2",
+            ],
+        )
+
+        assert result.exit_code == 0
+        # Click's CliRunner merges stdout+stderr into result.output.
+        assert "hello" in result.output
+        assert "world" in result.output
+
+    @responses.activate
+    def test_wrap_swallow_suppresses_echo(self, runner: CliRunner) -> None:
+        responses.add(
+            responses.POST,
+            "http://localhost:7828/status",
+            json={"success": True, "job": {"status": "progress"}},
+            status=201,
+        )
+
+        result = runner.invoke(
+            cli,
+            [
+                "wrap",
+                "-g",
+                "g",
+                "-j",
+                "j",
+                "--min-time",
+                "0",
+                "--swallow",
+                "--",
+                "sh",
+                "-c",
+                "echo secret; echo alsosecret >&2",
+            ],
+        )
+
+        assert result.exit_code == 0
+        assert "secret" not in result.output
+        assert "alsosecret" not in result.output
+        assert len(responses.calls) == 2
+
+    @responses.activate
+    def test_wrap_propagates_exit_code(self, runner: CliRunner) -> None:
+        responses.add(
+            responses.POST,
+            "http://localhost:7828/status",
+            json={"success": True, "job": {"status": "progress"}},
+            status=201,
+        )
+
+        result = runner.invoke(
+            cli,
+            ["wrap", "-g", "g", "-j", "j", "--min-time", "0", "--", "sh", "-c", "exit 7"],
+        )
+
+        assert result.exit_code == 7
+
+    @responses.activate
+    def test_wrap_suppress_exitcode_masks_nonzero(self, runner: CliRunner) -> None:
+        responses.add(
+            responses.POST,
+            "http://localhost:7828/status",
+            json={"success": True, "job": {"status": "progress"}},
+            status=201,
+        )
+
+        result = runner.invoke(
+            cli,
+            [
+                "wrap",
+                "-g",
+                "g",
+                "-j",
+                "j",
+                "--min-time",
+                "0",
+                "--suppress-exitcode",
+                "--",
+                "sh",
+                "-c",
+                "echo x; exit 9",
+            ],
+        )
+
+        assert result.exit_code == 0
+
+    @responses.activate
+    def test_wrap_report_exit_submits_success(self, runner: CliRunner) -> None:
+        responses.add(
+            responses.POST,
+            "http://localhost:7828/status",
+            json={"success": True, "job": {"status": "success"}},
+            status=201,
+        )
+
+        result = runner.invoke(
+            cli,
+            [
+                "wrap",
+                "-g",
+                "g",
+                "-j",
+                "j",
+                "--min-time",
+                "0",
+                "--report-exit",
+                "--",
+                "sh",
+                "-c",
+                "echo final-line",
+            ],
+        )
+
+        assert result.exit_code == 0
+        bodies = [json.loads(call.request.body) for call in responses.calls]
+        # Progress update first, then the final "success" with last line as message.
+        assert bodies[-1] == {
+            "group": "g",
+            "job": "j",
+            "status": "success",
+            "message": "final-line",
+        }
+
+    @responses.activate
+    def test_wrap_report_exit_submits_error_on_nonzero(self, runner: CliRunner) -> None:
+        responses.add(
+            responses.POST,
+            "http://localhost:7828/status",
+            json={"success": True, "job": {"status": "error"}},
+            status=201,
+        )
+
+        result = runner.invoke(
+            cli,
+            [
+                "wrap",
+                "-g",
+                "g",
+                "-j",
+                "j",
+                "--min-time",
+                "0",
+                "--report-exit",
+                "--",
+                "sh",
+                "-c",
+                "echo bad-output; exit 2",
+            ],
+        )
+
+        assert result.exit_code == 2
+        bodies = [json.loads(call.request.body) for call in responses.calls]
+        assert bodies[-1] == {
+            "group": "g",
+            "job": "j",
+            "status": "error",
+            "message": "bad-output",
+        }
+
+    @responses.activate
+    def test_wrap_report_exit_falls_back_when_no_output(self, runner: CliRunner) -> None:
+        responses.add(
+            responses.POST,
+            "http://localhost:7828/status",
+            json={"success": True, "job": {"status": "error"}},
+            status=201,
+        )
+
+        result = runner.invoke(
+            cli,
+            [
+                "wrap",
+                "-g",
+                "g",
+                "-j",
+                "j",
+                "--min-time",
+                "0",
+                "--report-exit",
+                "--",
+                "sh",
+                "-c",
+                "exit 4",
+            ],
+        )
+
+        assert result.exit_code == 4
+        bodies = [json.loads(call.request.body) for call in responses.calls]
+        assert len(bodies) == 1
+        assert bodies[0]["status"] == "error"
+        assert bodies[0]["message"] == "exited with code 4"
+
+    @responses.activate
+    def test_wrap_regex_filter(self, runner: CliRunner) -> None:
+        responses.add(
+            responses.POST,
+            "http://localhost:7828/status",
+            json={"success": True, "job": {"status": "progress"}},
+            status=201,
+        )
+
+        result = runner.invoke(
+            cli,
+            [
+                "wrap",
+                "-g",
+                "g",
+                "-j",
+                "j",
+                "--min-time",
+                "0",
+                "--regex",
+                "ERROR",
+                "--",
+                "sh",
+                "-c",
+                "echo INFO line; echo ERROR boom",
+            ],
+        )
+
+        assert result.exit_code == 0
+        bodies = [json.loads(call.request.body) for call in responses.calls]
+        assert len(bodies) == 1
+        assert bodies[0]["message"] == "ERROR boom"
+
+    def test_wrap_missing_command_errors(self, runner: CliRunner) -> None:
+        result = runner.invoke(cli, ["wrap", "-g", "g", "-j", "j"])
+        # Click reports a usage error (exit code 2) when the required COMMAND
+        # argument is missing.
+        assert result.exit_code != 0
+
+    def test_wrap_command_not_found(self, runner: CliRunner) -> None:
+        result = runner.invoke(
+            cli,
+            ["wrap", "-g", "g", "-j", "j", "--", "this-command-does-not-exist-abc123"],
+        )
+        assert result.exit_code == ExitCode.ERROR_INVALID_ARGS
+
+    @responses.activate
+    def test_wrap_attach_log_on_error(self, runner: CliRunner, tmp_path: Path) -> None:
+        """On non-zero exit with --attach-log, a multipart upload should happen."""
+        responses.add(
+            responses.POST,
+            "http://localhost:7828/status",
+            json={"success": True, "job": {"status": "error"}},
+            status=201,
+        )
+
+        result = runner.invoke(
+            cli,
+            [
+                "wrap",
+                "-g",
+                "g",
+                "-j",
+                "j",
+                "--min-time",
+                "0",
+                "--attach-log",
+                "--",
+                "sh",
+                "-c",
+                "echo line-a; echo line-b >&2; exit 5",
+            ],
+        )
+
+        assert result.exit_code == 5
+        # 2 progress posts + 1 final error post = 3 calls.
+        assert len(responses.calls) == 3
+        final = responses.calls[-1].request
+        # Multipart form requests use "multipart/form-data" content-type.
+        content_type = final.headers.get("Content-Type", "")
+        assert content_type.startswith("multipart/form-data")
+        # Body should contain both the captured stdout and stderr lines.
+        body = final.body
+        body_text = body.decode("utf-8", errors="replace") if isinstance(body, bytes) else body
+        assert "line-a" in body_text
+        assert "line-b" in body_text
+
+    @responses.activate
+    def test_wrap_attach_log_skipped_on_success(self, runner: CliRunner) -> None:
+        """On zero exit with --attach-log, no log should be attached."""
+        responses.add(
+            responses.POST,
+            "http://localhost:7828/status",
+            json={"success": True, "job": {"status": "success"}},
+            status=201,
+        )
+
+        result = runner.invoke(
+            cli,
+            [
+                "wrap",
+                "-g",
+                "g",
+                "-j",
+                "j",
+                "--min-time",
+                "0",
+                "--attach-log",
+                "--",
+                "sh",
+                "-c",
+                "echo ok",
+            ],
+        )
+
+        assert result.exit_code == 0
+        final = responses.calls[-1].request
+        # No multipart: content-type should be JSON on the final call.
+        assert final.headers.get("Content-Type", "").startswith("application/json")
+        body = json.loads(final.body)
+        assert body["status"] == "success"
+        assert body["message"] == "ok"
+
+
 class TestGroupsCommand:
     """Test the groups command."""
 

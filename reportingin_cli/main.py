@@ -9,6 +9,7 @@ import os
 import re
 import select
 import sys
+import tempfile
 
 import click
 
@@ -30,6 +31,7 @@ from reportingin_cli.errors import (
 from reportingin_cli.logging import log_submit_error
 from reportingin_cli.output import JsonFormatter, OutputFormatter, get_formatter
 from reportingin_cli.stream import StreamProcessor, compile_patterns
+from reportingin_cli.wrap import run_wrapped
 
 
 class Context:
@@ -397,6 +399,213 @@ def _handle_line(line: str, processor: StreamProcessor, swallow: bool) -> None:
         sys.stdout.write(line)
         sys.stdout.flush()
     processor.process_line(line)
+
+
+@cli.command(context_settings={"ignore_unknown_options": True})
+@click.option(
+    "--group", "-g", required=True, help="Group name", shell_complete=complete_group_names
+)
+@click.option("--job", "-j", required=True, help="Job name", shell_complete=complete_job_names)
+@click.option(
+    "--min-time",
+    type=click.FloatRange(min=0),
+    default=60.0,
+    show_default=True,
+    help="Minimum seconds between status submissions (debounced, last-wins)",
+)
+@click.option(
+    "--swallow",
+    is_flag=True,
+    help="Do not echo the wrapped command's stdout/stderr through",
+)
+@click.option(
+    "--regex",
+    "regex_patterns",
+    multiple=True,
+    metavar="PATTERN",
+    help="Only submit lines matching one of these regexes (repeatable)",
+)
+@click.option(
+    "--ignore",
+    "ignore_patterns",
+    multiple=True,
+    metavar="PATTERN",
+    help="Skip lines matching one of these regexes (repeatable)",
+)
+@click.option(
+    "--ignore-case",
+    is_flag=True,
+    help="Case-insensitive regex matching for --regex and --ignore",
+)
+@click.option(
+    "--strict",
+    is_flag=True,
+    help="Exit with error code on submission failure (default: swallow errors)",
+)
+@click.option(
+    "--report-exit",
+    is_flag=True,
+    help=(
+        "When the wrapped command exits, submit a final 'success' (exit 0) or "
+        "'error' (non-zero) status with the last submitted line as the message."
+    ),
+)
+@click.option(
+    "--suppress-exitcode",
+    is_flag=True,
+    help=(
+        "Do not propagate the wrapped command's exit code. Exit 0 on success, "
+        "or a wrapper-specific error code if the wrapper itself failed."
+    ),
+)
+@click.option(
+    "--attach-log",
+    is_flag=True,
+    help=(
+        "On non-zero exit, attach the captured stdout+stderr as a log file to "
+        "the final error status submission. Implies --report-exit."
+    ),
+)
+@click.argument("command", nargs=-1, required=True, type=click.UNPROCESSED)
+@pass_context
+def wrap(
+    ctx: Context,
+    group: str,
+    job: str,
+    min_time: float,
+    swallow: bool,
+    regex_patterns: tuple[str, ...],
+    ignore_patterns: tuple[str, ...],
+    ignore_case: bool,
+    strict: bool,
+    report_exit: bool,
+    suppress_exitcode: bool,
+    attach_log: bool,
+    command: tuple[str, ...],
+) -> None:
+    """Run a command, forward IO, and submit its output as progress updates.
+
+    Each line the wrapped command writes to stdout or stderr is submitted as
+    a 'progress' status update to the given group/job, debounced the same way
+    as ``stream``. Stdout is echoed to the wrapper's stdout and stderr to the
+    wrapper's stderr (unless --swallow). Stdin is forwarded to the child.
+
+    By default the wrapper exits with the wrapped command's exit code. With
+    --suppress-exitcode the wrapper always exits 0 on success (or a small
+    wrapper-only error code if a wrapper-side failure occurred).
+
+    Use ``--`` to separate wrapper options from the wrapped command:
+
+    \b
+        reportingin-cli wrap -g misc -j current-time -- date
+        reportingin-cli wrap -g ci -j build --report-exit -- make all
+    """
+    assert ctx.config is not None
+
+    try:
+        includes = compile_patterns(regex_patterns, ignore_case)
+        excludes = compile_patterns(ignore_patterns, ignore_case)
+    except re.error as e:
+        click.echo(f"Invalid regex: {e}", err=True)
+        sys.exit(ExitCode.ERROR_INVALID_ARGS)
+
+    use_strict = strict or ctx.config.submit.strict
+    # --attach-log is only meaningful alongside a final status submission.
+    should_report_exit = report_exit or attach_log
+
+    client = ctx.get_client()
+    wrapper_exit_code = ExitCode.SUCCESS
+
+    def send(message: str) -> None:
+        nonlocal wrapper_exit_code
+        try:
+            client.submit_status(group, job, "progress", message, None)
+        except ReportingInError as e:
+            if use_strict:
+                err_formatter: OutputFormatter = ctx.get_formatter()
+                click.echo(err_formatter.error(str(e)), err=True)
+                wrapper_exit_code = ExitCode(get_exit_code(e))
+                raise
+            assert ctx.config is not None
+            log_submit_error(e, ctx.config.submit)
+            if not ctx.quiet and not ctx.config.submit.syslog:
+                click.echo(f"Warning: {e}", err=True)
+
+    processor = StreamProcessor(
+        min_time=min_time,
+        regex_patterns=includes,
+        ignore_patterns=excludes,
+        send_fn=send,
+    )
+
+    # AIDEV-NOTE: Only open a log file when we might actually attach it. We
+    # always delete it at the end regardless of whether the submit succeeded.
+    log_path: str | None = None
+    log_file = None
+    if attach_log:
+        log_fd, log_path = tempfile.mkstemp(prefix="reportingin-wrap-", suffix=".log")
+        log_file = os.fdopen(log_fd, "wb")
+
+    child_exit_code = 0
+    last_sent_message: str | None = None
+
+    try:
+        try:
+            child_exit_code, last_sent_message = run_wrapped(
+                list(command),
+                processor,
+                swallow=swallow,
+                log_file=log_file,
+            )
+        except ReportingInError:
+            # Strict-mode submission failure during the run; exit already set.
+            sys.exit(wrapper_exit_code)
+        except FileNotFoundError as e:
+            click.echo(f"reportingin-cli wrap: {e}", err=True)
+            sys.exit(ExitCode.ERROR_INVALID_ARGS)
+        except PermissionError as e:
+            click.echo(f"reportingin-cli wrap: {e}", err=True)
+            sys.exit(ExitCode.ERROR_INVALID_ARGS)
+        except KeyboardInterrupt:
+            # run_wrapped forwards SIGINT to the child, so we shouldn't normally
+            # land here — but if we do, flush anything pending and bail.
+            with contextlib.suppress(ReportingInError):
+                processor.flush_pending()
+            sys.exit(wrapper_exit_code)
+
+        if should_report_exit:
+            final_status = "success" if child_exit_code == 0 else "error"
+            final_message = last_sent_message or f"exited with code {child_exit_code}"
+            attach_path: str | None = None
+            if attach_log and child_exit_code != 0 and log_file is not None:
+                log_file.flush()
+                attach_path = log_path
+            try:
+                client.submit_status(group, job, final_status, final_message, attach_path)
+            except ReportingInError as e:
+                if use_strict:
+                    err_formatter = ctx.get_formatter()
+                    click.echo(err_formatter.error(str(e)), err=True)
+                    wrapper_exit_code = ExitCode(get_exit_code(e))
+                else:
+                    log_submit_error(e, ctx.config.submit)
+                    if not ctx.quiet and not ctx.config.submit.syslog:
+                        click.echo(f"Warning: {e}", err=True)
+    finally:
+        if log_file is not None:
+            with contextlib.suppress(OSError):
+                log_file.close()
+        if log_path is not None:
+            with contextlib.suppress(OSError):
+                os.unlink(log_path)
+
+    # Exit code precedence: a wrapper-side failure in --strict mode always wins,
+    # because it reflects a failure in *our* side and the user asked to see it.
+    if wrapper_exit_code != ExitCode.SUCCESS:
+        sys.exit(wrapper_exit_code)
+    if suppress_exitcode:
+        sys.exit(ExitCode.SUCCESS)
+    sys.exit(child_exit_code)
 
 
 @cli.command()
