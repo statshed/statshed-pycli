@@ -351,33 +351,33 @@ The server uses Socket.IO for real-time updates. Connect to the same host/port.
 
 ## CLI Client
 
-The `reportingin-cli` command-line tool provides convenient access to this API:
+The `reportingin` command-line tool provides convenient access to this API:
 
 ```bash
 # Submit a status
-reportingin-cli submit --group nightly-builds --job backend-tests --status success --message "All tests passed"
+reportingin submit --group nightly-builds --job backend-tests --status success --message "All tests passed"
 
 # Check health
-reportingin-cli health
+reportingin health
 
 # List groups
-reportingin-cli groups
+reportingin groups
 
 # Get group jobs
-reportingin-cli jobs nightly-builds
+reportingin jobs nightly-builds
 
 # Get or update global configuration
-reportingin-cli config                          # View current config
-reportingin-cli config --progress-timeout 10    # Update progress timeout
-reportingin-cli config --staleness-timeout 48   # Update staleness timeout
+reportingin config                          # View current config
+reportingin config --progress-timeout 10    # Update progress timeout
+reportingin config --staleness-timeout 48   # Update staleness timeout
 
 # Use JSON output
-reportingin-cli health --json
-reportingin-cli groups --json
-reportingin-cli jobs nightly-builds --json
+reportingin health --json
+reportingin groups --json
+reportingin jobs nightly-builds --json
 
 # Connect to a different server
-reportingin-cli --url http://myserver:7828 health
+reportingin --url http://myserver:7828 health
 ```
 
-See `reportingin-cli --help` for full usage information.
+See `reportingin --help` for full usage information.

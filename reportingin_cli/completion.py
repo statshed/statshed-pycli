@@ -20,13 +20,13 @@ if TYPE_CHECKING:
 
 BASH_COMPLETION_SCRIPT = """
 # Reporting In CLI Bash completion
-# Install: reportingin-cli completion bash > ~/.local/share/bash-completion/completions/reportingin-cli
+# Install: reportingin completion bash > ~/.local/share/bash-completion/completions/reportingin
 
-_reportingin_cli_completion() {
+_reportingin_completion() {
     local IFS=$'\\n'
     local response
 
-    response=$(env COMP_WORDS="${COMP_WORDS[*]}" COMP_CWORD=$COMP_CWORD _REPORTINGIN_CLI_COMPLETE=bash_complete $1)
+    response=$(env COMP_WORDS="${COMP_WORDS[*]}" COMP_CWORD=$COMP_CWORD _REPORTINGIN_COMPLETE=bash_complete $1)
 
     for completion in $response; do
         IFS=',' read type value <<< "$completion"
@@ -36,21 +36,21 @@ _reportingin_cli_completion() {
     return 0
 }
 
-complete -o default -F _reportingin_cli_completion reportingin-cli
+complete -o default -F _reportingin_completion reportingin
 """
 
 ZSH_COMPLETION_SCRIPT = """
-#compdef reportingin-cli
+#compdef reportingin
 # Reporting In CLI Zsh completion
-# Install: reportingin-cli completion zsh > ~/.zfunc/_reportingin-cli
+# Install: reportingin completion zsh > ~/.zfunc/_reportingin
 
-_reportingin_cli() {
+_reportingin() {
     local -a completions
     local -a completions_with_descriptions
     local -a response
-    (( ! $+commands[reportingin-cli] )) && return 1
+    (( ! $+commands[reportingin] )) && return 1
 
-    response=("${(@f)$(env COMP_WORDS="${words[*]}" COMP_CWORD=$((CURRENT-1)) _REPORTINGIN_CLI_COMPLETE=zsh_complete reportingin-cli)}")
+    response=("${(@f)$(env COMP_WORDS="${words[*]}" COMP_CWORD=$((CURRENT-1)) _REPORTINGIN_COMPLETE=zsh_complete reportingin)}")
 
     for key descr in ${(kv)response}; do
         if [[ "$descr" == "_" ]]; then
@@ -69,15 +69,15 @@ _reportingin_cli() {
     fi
 }
 
-compdef _reportingin_cli reportingin-cli
+compdef _reportingin reportingin
 """
 
 FISH_COMPLETION_SCRIPT = """
 # Reporting In CLI Fish completion
-# Install: reportingin-cli completion fish > ~/.config/fish/completions/reportingin-cli.fish
+# Install: reportingin completion fish > ~/.config/fish/completions/reportingin.fish
 
-function _reportingin_cli_completion
-    set -l response (env _REPORTINGIN_CLI_COMPLETE=fish_complete COMP_WORDS=(commandline -cp) COMP_CWORD=(commandline -t) reportingin-cli)
+function _reportingin_completion
+    set -l response (env _REPORTINGIN_COMPLETE=fish_complete COMP_WORDS=(commandline -cp) COMP_CWORD=(commandline -t) reportingin)
 
     for completion in $response
         set -l metadata (string split "," -- $completion)
@@ -92,7 +92,7 @@ function _reportingin_cli_completion
     end
 end
 
-complete -c reportingin-cli -f -a "(_reportingin_cli_completion)"
+complete -c reportingin -f -a "(_reportingin_completion)"
 """
 
 

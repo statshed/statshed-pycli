@@ -2,31 +2,31 @@
 # AIDEV-NOTE: Autopkgtest smoke test for installed package
 set -e
 
-echo "Testing reportingin-cli --help"
-reportingin-cli --help
+echo "Testing reportingin --help"
+reportingin --help
 
-echo "Testing reportingin-cli --version"
-reportingin-cli --version
+echo "Testing reportingin --version"
+reportingin --version
 
-echo "Testing reportingin-cli health --help"
-reportingin-cli health --help
+echo "Testing reportingin health --help"
+reportingin health --help
 
-echo "Testing reportingin-cli submit --help"
-reportingin-cli submit --help
+echo "Testing reportingin submit --help"
+reportingin submit --help
 
-echo "Testing reportingin-cli groups --help"
-reportingin-cli groups --help
+echo "Testing reportingin groups --help"
+reportingin groups --help
 
-echo "Testing reportingin-cli jobs --help"
-reportingin-cli jobs --help
+echo "Testing reportingin jobs --help"
+reportingin jobs --help
 
-echo "Testing reportingin-cli config --help"
-reportingin-cli config --help
+echo "Testing reportingin config --help"
+reportingin config --help
 
-echo "Testing reportingin-cli group-config --help"
-reportingin-cli group-config --help
+echo "Testing reportingin group-config --help"
+reportingin group-config --help
 
-echo "Testing reportingin-cli completion --help"
-reportingin-cli completion --help
+echo "Testing reportingin completion --help"
+reportingin completion --help
 
 echo "All smoke tests passed!"

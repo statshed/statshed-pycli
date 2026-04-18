@@ -44,7 +44,7 @@ dev = [
 ]
 
 [project.scripts]
-reportingin-cli = "reportingin_cli.main:cli"
+reportingin = "reportingin_cli.main:cli"
 
 [project.urls]
 Homepage = "https://github.com/reportingin/reportingin-cli"

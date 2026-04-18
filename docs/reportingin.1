@@ -1,13 +1,13 @@
-.\" Man page for reportingin-cli
+.\" Man page for reportingin
 .\" AIDEV-NOTE: This man page is included in both PyPI sdist and Debian packages
-.TH REPORTINGIN-CLI 1 "January 2026" "reportingin-cli 1.0.0" "User Commands"
+.TH REPORTINGIN 1 "January 2026" "reportingin 1.0.0" "User Commands"
 .SH NAME
-reportingin-cli \- command-line interface for Reporting In status dashboard
+reportingin \- command-line interface for Reporting In status dashboard
 .SH SYNOPSIS
-.B reportingin-cli
+.B reportingin
 [\fIOPTIONS\fR] \fICOMMAND\fR [\fIARGS\fR]...
 .SH DESCRIPTION
-.B reportingin-cli
+.B reportingin
 is a command-line tool for interacting with the Reporting In status dashboard.
 It allows users to submit job status updates, check system health, list
 groups and jobs, and configure timeout settings.
@@ -40,7 +40,7 @@ Show help message and exit.
 .SS submit
 Submit a job status update.
 .PP
-.B reportingin-cli submit
+.B reportingin submit
 .BR \-g " " \fIGROUP\fR
 .BR \-j " " \fIJOB\fR
 .BR \-s " " \fISTATUS\fR
@@ -65,25 +65,25 @@ command exits with code 0 for safe use in scripts with \fBset \-e\fR.
 .SS health
 Check overall system health.
 .PP
-.B reportingin-cli health
+.B reportingin health
 [\fB\-\-json\fR]
 .PP
 Returns exit code 0 if healthy, 1 if unhealthy.
 .SS groups
 List all groups with health summaries.
 .PP
-.B reportingin-cli groups
+.B reportingin groups
 [\fB\-\-json\fR]
 .SS jobs
 List all jobs in a group.
 .PP
-.B reportingin-cli jobs
+.B reportingin jobs
 [\fB\-\-json\fR]
 \fIGROUP_NAME\fR
 .SS config
 View or update global configuration.
 .PP
-.B reportingin-cli config
+.B reportingin config
 [\fB\-p\fR \fIMINUTES\fR]
 [\fB\-s\fR \fIHOURS\fR]
 [\fB\-\-json\fR]
@@ -98,7 +98,7 @@ Without options, displays current configuration.
 .SS group-config
 View or update group-specific configuration.
 .PP
-.B reportingin-cli group-config
+.B reportingin group-config
 [\fIOPTIONS\fR]
 \fIGROUP_NAME\fR
 .TP
@@ -118,7 +118,7 @@ Without options, displays current group configuration.
 .SS completion
 Generate shell completion script.
 .PP
-.B reportingin-cli completion
+.B reportingin completion
 \fISHELL\fR
 .PP
 Where \fISHELL\fR is one of: \fBbash\fR, \fBzsh\fR, \fBfish\fR.
@@ -126,9 +126,9 @@ Where \fISHELL\fR is one of: \fBbash\fR, \fBzsh\fR, \fBfish\fR.
 Install completions by redirecting output to the appropriate location:
 .RS
 .nf
-\fBbash:\fR reportingin-cli completion bash > ~/.local/share/bash-completion/completions/reportingin-cli
-\fBzsh:\fR  reportingin-cli completion zsh > ~/.zfunc/_reportingin-cli
-\fBfish:\fR reportingin-cli completion fish > ~/.config/fish/completions/reportingin-cli.fish
+\fBbash:\fR reportingin completion bash > ~/.local/share/bash-completion/completions/reportingin
+\fBzsh:\fR  reportingin completion zsh > ~/.zfunc/_reportingin
+\fBfish:\fR reportingin completion fish > ~/.config/fish/completions/reportingin.fish
 .fi
 .RE
 .SH EXIT STATUS
@@ -159,7 +159,7 @@ Resource not found.
 .SH FILES
 Configuration files are read in the following order (first found wins):
 .TP
-.I ./reportingin-cli.yaml
+.I ./reportingin.yaml
 Current directory configuration.
 .TP
 .I ~/.config/reportingin/reportingin.yaml
@@ -195,28 +195,28 @@ When set (to any value), disables colored output.
 Submit a successful job status:
 .RS
 .nf
-reportingin-cli submit -g backups -j database -s success -m "Completed in 5m"
+reportingin submit -g backups -j database -s success -m "Completed in 5m"
 .fi
 .RE
 .PP
 Check system health:
 .RS
 .nf
-reportingin-cli health
+reportingin health
 .fi
 .RE
 .PP
 List all groups:
 .RS
 .nf
-reportingin-cli groups
+reportingin groups
 .fi
 .RE
 .PP
 List jobs in a specific group:
 .RS
 .nf
-reportingin-cli jobs backups
+reportingin jobs backups
 .fi
 .RE
 .PP
@@ -224,12 +224,12 @@ Use in a cron job with error reporting:
 .RS
 .nf
 #!/bin/bash
-reportingin-cli submit -g backups -j database -s progress
+reportingin submit -g backups -j database -s progress
 pg_dump mydb > /backups/mydb.sql
 if [ $? -eq 0 ]; then
-    reportingin-cli submit -g backups -j database -s success
+    reportingin submit -g backups -j database -s success
 else
-    reportingin-cli submit -g backups -j database -s error -m "Backup failed"
+    reportingin submit -g backups -j database -s error -m "Backup failed"
 fi
 .fi
 .RE
@@ -237,7 +237,7 @@ fi
 Use JSON output for scripting:
 .RS
 .nf
-reportingin-cli --json health | jq '.status'
+reportingin --json health | jq '.status'
 .fi
 .RE
 .SH SEE ALSO

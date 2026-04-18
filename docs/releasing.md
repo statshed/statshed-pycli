@@ -139,7 +139,7 @@ This triggers the automated workflows:
 pip install --upgrade reportingin-cli
 
 # Verify installation
-reportingin-cli --version  # Should show new version
+reportingin --version  # Should show new version
 ```
 
 #### GitHub Release Assets
@@ -159,7 +159,7 @@ sudo dpkg -i reportingin-cli_X.Y.Z-1_all.deb
 sudo apt-get install -f  # Install any missing dependencies
 
 # Verify
-reportingin-cli --version
+reportingin --version
 ```
 
 ## Release Candidate Process

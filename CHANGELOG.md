@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Configuration System**
   - YAML configuration file support with automatic discovery
-  - Configuration file search order: CLI option > environment variable > ./reportingin-cli.yaml > ~/.config/reportingin/reportingin.yaml > /etc/reportingin/reportingin.yaml
+  - Configuration file search order: CLI option > environment variable > ./reportingin.yaml > ~/.config/reportingin/reportingin.yaml > /etc/reportingin/reportingin.yaml
   - Support for all settings: URL, timeout, retries, output format, color mode
 
 - **Error Handling**

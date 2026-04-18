@@ -21,47 +21,47 @@ pip install reportingin-cli[rich]
 
 ```bash
 # Submit a success status
-reportingin-cli submit -g nightly-builds -j backend-tests -s success -m "All tests passed"
+reportingin submit -g nightly-builds -j backend-tests -s success -m "All tests passed"
 
 # Submit an error status
-reportingin-cli submit -g nightly-builds -j backend-tests -s error -m "3 tests failed"
+reportingin submit -g nightly-builds -j backend-tests -s error -m "3 tests failed"
 
 # Submit a progress status
-reportingin-cli submit -g nightly-builds -j backend-tests -s progress -m "Running tests..."
+reportingin submit -g nightly-builds -j backend-tests -s progress -m "Running tests..."
 ```
 
 ### Check System Health
 
 ```bash
-reportingin-cli health
+reportingin health
 ```
 
 ### List Groups
 
 ```bash
-reportingin-cli groups
+reportingin groups
 ```
 
 ### List Jobs in a Group
 
 ```bash
-reportingin-cli jobs nightly-builds
+reportingin jobs nightly-builds
 ```
 
 ### View/Update Configuration
 
 ```bash
 # View global config
-reportingin-cli config
+reportingin config
 
 # Update global config
-reportingin-cli config --progress-timeout 10 --staleness-timeout 48
+reportingin config --progress-timeout 10 --staleness-timeout 48
 
 # View group config
-reportingin-cli group-config nightly-builds
+reportingin group-config nightly-builds
 
 # Update group config
-reportingin-cli group-config nightly-builds --progress-timeout 15
+reportingin group-config nightly-builds --progress-timeout 15
 ```
 
 ## Configuration File
@@ -69,7 +69,7 @@ reportingin-cli group-config nightly-builds --progress-timeout 15
 The CLI reads configuration from these locations (in order of precedence):
 
 1. Path specified via `--config` or `REPORTINGIN_CONFIG` environment variable
-2. `./reportingin-cli.yaml` (current directory)
+2. `./reportingin.yaml` (current directory)
 3. `~/.config/reportingin/reportingin.yaml`
 4. `/etc/reportingin/reportingin.yaml`
 
@@ -122,10 +122,10 @@ Reporting In CLI provides shell completion for Bash, Zsh, and Fish. The completi
 mkdir -p ~/.local/share/bash-completion/completions
 
 # Generate and install the completion script
-reportingin-cli completion bash > ~/.local/share/bash-completion/completions/reportingin-cli
+reportingin completion bash > ~/.local/share/bash-completion/completions/reportingin
 
 # Reload your shell or source the file
-source ~/.local/share/bash-completion/completions/reportingin-cli
+source ~/.local/share/bash-completion/completions/reportingin
 ```
 
 **Zsh:**
@@ -138,7 +138,7 @@ mkdir -p ~/.zfunc
 # autoload -Uz compinit && compinit
 
 # Generate and install the completion script
-reportingin-cli completion zsh > ~/.zfunc/_reportingin-cli
+reportingin completion zsh > ~/.zfunc/_reportingin
 
 # Reload completions
 autoload -Uz compinit && compinit
@@ -150,7 +150,7 @@ autoload -Uz compinit && compinit
 mkdir -p ~/.config/fish/completions
 
 # Generate and install the completion script
-reportingin-cli completion fish > ~/.config/fish/completions/reportingin-cli.fish
+reportingin completion fish > ~/.config/fish/completions/reportingin.fish
 ```
 
 ### Dynamic Completion
@@ -176,7 +176,7 @@ jobs:
     steps:
       - name: Report build start
         run: |
-          reportingin-cli submit -g ci-builds -j "${{ github.repository }}" \
+          reportingin submit -g ci-builds -j "${{ github.repository }}" \
             -s progress -m "Build started: ${{ github.sha }}"
 
       - name: Build
@@ -185,13 +185,13 @@ jobs:
       - name: Report build success
         if: success()
         run: |
-          reportingin-cli submit -g ci-builds -j "${{ github.repository }}" \
+          reportingin submit -g ci-builds -j "${{ github.repository }}" \
             -s success -m "Build passed: ${{ github.sha }}"
 
       - name: Report build failure
         if: failure()
         run: |
-          reportingin-cli submit -g ci-builds -j "${{ github.repository }}" \
+          reportingin submit -g ci-builds -j "${{ github.repository }}" \
             -s error -m "Build failed: ${{ github.sha }}"
 ```
 
@@ -204,13 +204,13 @@ For safe use with `set -eu` (script exits on error), use the default lenient mod
 set -eu
 
 # Submit commands won't cause script to exit on API errors
-reportingin-cli submit -g backups -j database -s progress -m "Starting backup"
+reportingin submit -g backups -j database -s progress -m "Starting backup"
 
 # Do the actual backup
 pg_dump mydb > /backups/mydb.sql
 
 # Report success
-reportingin-cli submit -g backups -j database -s success -m "Backup completed"
+reportingin submit -g backups -j database -s success -m "Backup completed"
 ```
 
 For manual error handling with strict mode:
@@ -218,7 +218,7 @@ For manual error handling with strict mode:
 ```bash
 #!/bin/bash
 
-if ! reportingin-cli submit --strict -g backups -j database -s progress; then
+if ! reportingin submit --strict -g backups -j database -s progress; then
     echo "Warning: Could not report status to dashboard"
 fi
 
@@ -226,9 +226,9 @@ pg_dump mydb > /backups/mydb.sql
 backup_status=$?
 
 if [ $backup_status -eq 0 ]; then
-    reportingin-cli submit -g backups -j database -s success
+    reportingin submit -g backups -j database -s success
 else
-    reportingin-cli submit -g backups -j database -s error -m "Backup failed with code $backup_status"
+    reportingin submit -g backups -j database -s error -m "Backup failed with code $backup_status"
 fi
 ```
 
@@ -236,19 +236,19 @@ fi
 
 ```bash
 # Check overall health with rich output
-$ reportingin-cli health
+$ reportingin health
 
 # List groups with status summary
-$ reportingin-cli groups
+$ reportingin groups
 
 # Drill into a specific group
-$ reportingin-cli jobs nightly-builds
+$ reportingin jobs nightly-builds
 
 # Check group-specific timeout configuration
-$ reportingin-cli group-config nightly-builds
+$ reportingin group-config nightly-builds
 
 # Update group timeout (builds can take longer)
-$ reportingin-cli group-config nightly-builds --progress-timeout 30
+$ reportingin group-config nightly-builds --progress-timeout 30
 ```
 
 ### Script Integration with Error Logging to Syslog
@@ -301,7 +301,7 @@ Error: Group 'nonexistent' not found
 
 **Solution**:
 - Groups are auto-created on first status submission
-- Submit a status to create the group: `reportingin-cli submit -g newgroup -j newjob -s success`
+- Submit a status to create the group: `reportingin submit -g newgroup -j newjob -s success`
 
 ### Invalid Configuration File
 

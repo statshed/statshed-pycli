@@ -26,7 +26,7 @@ DEFAULT_RETRY_DELAY = 1.0
 
 # Configuration file search paths (in order of precedence)
 CONFIG_SEARCH_PATHS = [
-    Path("./reportingin-cli.yaml"),
+    Path("./reportingin.yaml"),
     Path.home() / ".config" / "reportingin" / "reportingin.yaml",
     Path("/etc/reportingin/reportingin.yaml"),
 ]

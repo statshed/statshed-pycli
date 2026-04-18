@@ -157,7 +157,7 @@ a `uv.lock` file committed to the repository. The lockfile already exists.
 - [x] Inspect generated wheel for correct files ✓
 - [x] Inspect generated sdist for correct files: ✓
   - [x] Verify man page is included (after Phase 2.5) ✓
-  - [x] Run: `tar -tzf dist/reportingin_cli-*.tar.gz | grep reportingin-cli.1` ✓
+  - [x] Run: `tar -tzf dist/reportingin_cli-*.tar.gz | grep reportingin.1` ✓
 - [x] Ensure `__version__` in `__init__.py` matches pyproject.toml ✓
 
 ### 3.2 Version Management Strategy
@@ -185,8 +185,8 @@ a `uv.lock` file committed to the repository. The lockfile already exists.
   - [x] Build package locally ✓
   - [x] Install in fresh virtual environment ✓
   - [x] Run smoke tests against installed package ✓
-  - [x] Verify entry point works: `reportingin-cli --help` ✓
-  - [x] Verify sub-commands work: `reportingin-cli health --help` ✓
+  - [x] Verify entry point works: `reportingin --help` ✓
+  - [x] Verify sub-commands work: `reportingin health --help` ✓
 - [x] Test installation with `pip install .` ✓ (via test-package.sh)
 - [ ] Test installation with `pipx install .`
 - [x] Test optional dependencies: `pip install .[rich]` ✓ (via test-package.sh)
@@ -268,11 +268,11 @@ a `uv.lock` file committed to the repository. The lockfile already exists.
   ```sh
   #!/bin/sh
   set -e
-  reportingin-cli --help
-  reportingin-cli --version
-  reportingin-cli health --help
-  reportingin-cli submit --help
-  reportingin-cli completion --help
+  reportingin --help
+  reportingin --version
+  reportingin health --help
+  reportingin submit --help
+  reportingin completion --help
   ```
 - [x] **Make smoke-test executable**: `chmod +x debian/tests/smoke-test` ✓
 - [ ] Run autopkgtest locally
@@ -308,7 +308,7 @@ a `uv.lock` file committed to the repository. The lockfile already exists.
 
 **IMPORTANT:** Man pages must be created during Phase 2.5 (before the first PyPI release).
 
-- [x] Create `docs/reportingin-cli.1` (troff format): ✓
+- [x] Create `docs/reportingin.1` (troff format): ✓
   - [x] NAME section ✓
   - [x] SYNOPSIS section ✓
   - [x] DESCRIPTION section ✓
@@ -320,7 +320,7 @@ a `uv.lock` file committed to the repository. The lockfile already exists.
   - [x] EXAMPLES section ✓
   - [x] SEE ALSO section ✓
   - [x] AUTHOR section ✓
-- [x] Test man page rendering: `man ./docs/reportingin-cli.1` ✓
+- [x] Test man page rendering: `man ./docs/reportingin.1` ✓
 - [x] Include man page in Debian package via `debian/reportingin-cli.manpages` ✓
 
 ---
@@ -372,8 +372,8 @@ Recommended implementation order to minimize rework:
 6. [x] Add badges to README ✓
 
 ### Phase 2.5: Man Pages (before first release)
-7. [x] Create `docs/reportingin-cli.1` man page ✓
-8. [x] Test man page rendering: `man ./docs/reportingin-cli.1` ✓
+7. [x] Create `docs/reportingin.1` man page ✓
+8. [x] Test man page rendering: `man ./docs/reportingin.1` ✓
    - **IMPORTANT:** Man pages MUST be created before Phase 3 (first PyPI release)
 
 ### Phase 3: PyPI Publishing
@@ -701,7 +701,7 @@ reportingin-cli/
 │   ├── reportingin-cli.manpages
 │   └── reportingin-cli.docs
 ├── docs/
-│   ├── reportingin-cli.1
+│   ├── reportingin.1
 │   └── releasing.md
 ├── scripts/
 │   ├── build-deb.sh

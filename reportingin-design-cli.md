@@ -4,7 +4,7 @@ A command-line interface for interacting with the Reporting In status dashboard 
 
 ## Overview
 
-The Reporting In CLI (`reportingin-cli`) provides a robust command-line interface for submitting job statuses and querying the Reporting In dashboard. It is designed to work equally well in interactive terminal sessions, CI/CD pipelines, cron jobs, and shell scripts.
+The Reporting In CLI (`reportingin`) provides a robust command-line interface for submitting job statuses and querying the Reporting In dashboard. It is designed to work equally well in interactive terminal sessions, CI/CD pipelines, cron jobs, and shell scripts.
 
 ## Technology Stack
 
@@ -57,7 +57,7 @@ cli/
 #### `submit` - Submit Job Status
 
 ```bash
-reportingin-cli submit --group <name> --job <name> --status <status> [--message <msg>]
+reportingin submit --group <name> --job <name> --status <status> [--message <msg>]
 ```
 
 | Option | Short | Required | Description |
@@ -76,7 +76,7 @@ reportingin-cli submit --group <name> --job <name> --status <status> [--message 
 #### `health` - System Health Summary
 
 ```bash
-reportingin-cli health [--json]
+reportingin health [--json]
 ```
 
 Returns overall system health status. Exits with code 1 if unhealthy.
@@ -84,7 +84,7 @@ Returns overall system health status. Exits with code 1 if unhealthy.
 #### `groups` - List Groups
 
 ```bash
-reportingin-cli groups [--json]
+reportingin groups [--json]
 ```
 
 Lists all groups with health summaries.
@@ -92,7 +92,7 @@ Lists all groups with health summaries.
 #### `jobs` - List Jobs in Group
 
 ```bash
-reportingin-cli jobs <group_name> [--json]
+reportingin jobs <group_name> [--json]
 ```
 
 Lists all jobs within a specific group.
@@ -101,10 +101,10 @@ Lists all jobs within a specific group.
 
 ```bash
 # View global config
-reportingin-cli config
+reportingin config
 
 # Update global config
-reportingin-cli config --progress-timeout <minutes> --staleness-timeout <hours>
+reportingin config --progress-timeout <minutes> --staleness-timeout <hours>
 ```
 
 | Option | Short | Description |
@@ -117,13 +117,13 @@ reportingin-cli config --progress-timeout <minutes> --staleness-timeout <hours>
 
 ```bash
 # View group config
-reportingin-cli group-config <group_name>
+reportingin group-config <group_name>
 
 # Update group config
-reportingin-cli group-config <group_name> --progress-timeout <minutes>
+reportingin group-config <group_name> --progress-timeout <minutes>
 
 # Reset to global defaults
-reportingin-cli group-config <group_name> --reset-progress-timeout --reset-staleness-timeout
+reportingin group-config <group_name> --reset-progress-timeout --reset-staleness-timeout
 ```
 
 | Option | Short | Description |
@@ -138,9 +138,9 @@ reportingin-cli group-config <group_name> --reset-progress-timeout --reset-stale
 
 ```bash
 # Generate completion script
-reportingin-cli completion bash > ~/.local/share/bash-completion/completions/reportingin-cli
-reportingin-cli completion zsh > ~/.zfunc/_reportingin-cli
-reportingin-cli completion fish > ~/.config/fish/completions/reportingin-cli.fish
+reportingin completion bash > ~/.local/share/bash-completion/completions/reportingin
+reportingin completion zsh > ~/.zfunc/_reportingin
+reportingin completion fish > ~/.config/fish/completions/reportingin.fish
 ```
 
 ## Configuration File
@@ -148,7 +148,7 @@ reportingin-cli completion fish > ~/.config/fish/completions/reportingin-cli.fis
 The CLI reads configuration from the following locations (in order of precedence):
 
 1. Path specified via `--config` or `REPORTINGIN_CONFIG`
-2. `./reportingin-cli.yaml` (current directory)
+2. `./reportingin.yaml` (current directory)
 3. `~/.config/reportingin/reportingin.yaml`
 4. `/etc/reportingin/reportingin.yaml`
 
@@ -202,7 +202,7 @@ timeout: 10
 ### Plain Mode (default when Rich not installed or `--no-color`)
 
 ```
-$ reportingin-cli health
+$ reportingin health
 System Health: ✅ HEALTHY
 Total Jobs: 10
   Healthy: 8
@@ -393,7 +393,7 @@ jobs:
     steps:
       - name: Report build start
         run: |
-          reportingin-cli submit -g ci-builds -j "${{ github.repository }}" \
+          reportingin submit -g ci-builds -j "${{ github.repository }}" \
             -s progress -m "Build started: ${{ github.sha }}"
 
       - name: Build
@@ -402,13 +402,13 @@ jobs:
       - name: Report build success
         if: success()
         run: |
-          reportingin-cli submit -g ci-builds -j "${{ github.repository }}" \
+          reportingin submit -g ci-builds -j "${{ github.repository }}" \
             -s success -m "Build passed: ${{ github.sha }}"
 
       - name: Report build failure
         if: failure()
         run: |
-          reportingin-cli submit -g ci-builds -j "${{ github.repository }}" \
+          reportingin submit -g ci-builds -j "${{ github.repository }}" \
             -s error -m "Build failed: ${{ github.sha }}"
 ```
 
@@ -419,13 +419,13 @@ jobs:
 set -eu
 
 # Submit commands won't cause script to exit on API errors
-reportingin-cli submit -g backups -j database -s progress -m "Starting backup"
+reportingin submit -g backups -j database -s progress -m "Starting backup"
 
 # Do the actual backup
 pg_dump mydb > /backups/mydb.sql
 
 # Report success
-reportingin-cli submit -g backups -j database -s success -m "Backup completed"
+reportingin submit -g backups -j database -s success -m "Backup completed"
 ```
 
 ### Cron Job with Strict Error Handling
@@ -434,7 +434,7 @@ reportingin-cli submit -g backups -j database -s success -m "Backup completed"
 #!/bin/bash
 # No set -eu, handle errors manually
 
-if ! reportingin-cli submit --strict -g backups -j database -s progress; then
+if ! reportingin submit --strict -g backups -j database -s progress; then
     echo "Warning: Could not report status to dashboard"
 fi
 
@@ -442,9 +442,9 @@ pg_dump mydb > /backups/mydb.sql
 backup_status=$?
 
 if [ $backup_status -eq 0 ]; then
-    reportingin-cli submit -g backups -j database -s success
+    reportingin submit -g backups -j database -s success
 else
-    reportingin-cli submit -g backups -j database -s error -m "Backup failed with code $backup_status"
+    reportingin submit -g backups -j database -s error -m "Backup failed with code $backup_status"
 fi
 ```
 
@@ -452,19 +452,19 @@ fi
 
 ```bash
 # Check overall health with rich output
-$ reportingin-cli health
+$ reportingin health
 
 # List groups with status summary
-$ reportingin-cli groups
+$ reportingin groups
 
 # Drill into a specific group
-$ reportingin-cli jobs nightly-builds
+$ reportingin jobs nightly-builds
 
 # Check group-specific timeout configuration
-$ reportingin-cli group-config nightly-builds
+$ reportingin group-config nightly-builds
 
 # Update group timeout (builds can take longer)
-$ reportingin-cli group-config nightly-builds --progress-timeout 30
+$ reportingin group-config nightly-builds --progress-timeout 30
 ```
 
 ### Configuration File Example

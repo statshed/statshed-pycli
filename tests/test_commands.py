@@ -1172,7 +1172,7 @@ class TestCompletionCommand:
         """Test fish completion script generation."""
         result = runner.invoke(cli, ["completion", "fish"])
         assert result.exit_code == 0
-        assert "complete -c reportingin-cli" in result.output
+        assert "complete -c reportingin" in result.output
 
     def test_completion_invalid_shell(self, runner: CliRunner) -> None:
         """Test that invalid shell name is rejected."""

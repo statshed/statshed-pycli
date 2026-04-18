@@ -497,8 +497,8 @@ def wrap(
     Use ``--`` to separate wrapper options from the wrapped command:
 
     \b
-        reportingin-cli wrap -g misc -j current-time -- date
-        reportingin-cli wrap -g ci -j build --report-exit -- make all
+        reportingin wrap -g misc -j current-time -- date
+        reportingin wrap -g ci -j build --report-exit -- make all
     """
     assert ctx.config is not None
 
@@ -561,10 +561,10 @@ def wrap(
             # Strict-mode submission failure during the run; exit already set.
             sys.exit(wrapper_exit_code)
         except FileNotFoundError as e:
-            click.echo(f"reportingin-cli wrap: {e}", err=True)
+            click.echo(f"reportingin wrap: {e}", err=True)
             sys.exit(ExitCode.ERROR_INVALID_ARGS)
         except PermissionError as e:
-            click.echo(f"reportingin-cli wrap: {e}", err=True)
+            click.echo(f"reportingin wrap: {e}", err=True)
             sys.exit(ExitCode.ERROR_INVALID_ARGS)
         except KeyboardInterrupt:
             # run_wrapped forwards SIGINT to the child, so we shouldn't normally
@@ -759,9 +759,9 @@ def completion(shell: str) -> None:
     Install by redirecting output to the appropriate location:
 
     \b
-    Bash: reportingin-cli completion bash > ~/.local/share/bash-completion/completions/reportingin-cli
-    Zsh:  reportingin-cli completion zsh > ~/.zfunc/_reportingin-cli
-    Fish: reportingin-cli completion fish > ~/.config/fish/completions/reportingin-cli.fish
+    Bash: reportingin completion bash > ~/.local/share/bash-completion/completions/reportingin
+    Zsh:  reportingin completion zsh > ~/.zfunc/_reportingin
+    Fish: reportingin completion fish > ~/.config/fish/completions/reportingin.fish
     """
     script = get_completion_script(shell)
     click.echo(script)
