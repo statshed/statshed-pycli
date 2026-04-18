@@ -4,6 +4,10 @@ AIDEV-NOTE: This is the main CLI module using Click. Global options are
 defined on the cli() group and passed via context to subcommands.
 """
 
+import contextlib
+import os
+import re
+import select
 import sys
 
 import click
@@ -25,6 +29,7 @@ from reportingin_cli.errors import (
 )
 from reportingin_cli.logging import log_submit_error
 from reportingin_cli.output import JsonFormatter, OutputFormatter, get_formatter
+from reportingin_cli.stream import StreamProcessor, compile_patterns
 
 
 class Context:
@@ -216,6 +221,182 @@ def submit(
             log_submit_error(e, ctx.config.submit)
             if not ctx.quiet and not ctx.config.submit.syslog:
                 click.echo(f"Warning: {e}", err=True)
+
+
+@cli.command()
+@click.option(
+    "--group", "-g", required=True, help="Group name", shell_complete=complete_group_names
+)
+@click.option("--job", "-j", required=True, help="Job name", shell_complete=complete_job_names)
+@click.option(
+    "--min-time",
+    type=click.FloatRange(min=0),
+    default=60.0,
+    show_default=True,
+    help="Minimum seconds between status submissions (debounced, last-wins)",
+)
+@click.option(
+    "--swallow",
+    is_flag=True,
+    help="Do not echo stdin to stdout",
+)
+@click.option(
+    "--regex",
+    "regex_patterns",
+    multiple=True,
+    metavar="PATTERN",
+    help="Only submit lines matching one of these regexes (repeatable)",
+)
+@click.option(
+    "--ignore",
+    "ignore_patterns",
+    multiple=True,
+    metavar="PATTERN",
+    help="Skip lines matching one of these regexes (repeatable)",
+)
+@click.option(
+    "--ignore-case",
+    is_flag=True,
+    help="Case-insensitive regex matching for --regex and --ignore",
+)
+@click.option(
+    "--strict",
+    is_flag=True,
+    help="Exit with error code on submission failure (default: swallow errors)",
+)
+@pass_context
+def stream(
+    ctx: Context,
+    group: str,
+    job: str,
+    min_time: float,
+    swallow: bool,
+    regex_patterns: tuple[str, ...],
+    ignore_patterns: tuple[str, ...],
+    ignore_case: bool,
+    strict: bool,
+) -> None:
+    """Stream progress status updates from stdin.
+
+    Each line of stdin is submitted as a "progress" status message to the
+    given group/job. Submissions are debounced: the first accepted line is
+    sent immediately, and further lines within --min-time are held (last
+    message wins) and flushed when the window elapses or on EOF.
+
+    --regex selects which lines are eligible for submission; --ignore
+    excludes them. Both use re.search semantics and are repeatable.
+    """
+    assert ctx.config is not None
+
+    try:
+        includes = compile_patterns(regex_patterns, ignore_case)
+        excludes = compile_patterns(ignore_patterns, ignore_case)
+    except re.error as e:
+        click.echo(f"Invalid regex: {e}", err=True)
+        sys.exit(ExitCode.ERROR_INVALID_ARGS)
+
+    use_strict = strict or ctx.config.submit.strict
+    client = ctx.get_client()
+    exit_code = ExitCode.SUCCESS
+
+    def send(message: str) -> None:
+        nonlocal exit_code
+        try:
+            client.submit_status(group, job, "progress", message, None)
+        except ReportingInError as e:
+            if use_strict:
+                err_formatter: OutputFormatter = ctx.get_formatter()
+                click.echo(err_formatter.error(str(e)), err=True)
+                exit_code = ExitCode(get_exit_code(e))
+                raise
+            assert ctx.config is not None
+            log_submit_error(e, ctx.config.submit)
+            if not ctx.quiet and not ctx.config.submit.syslog:
+                click.echo(f"Warning: {e}", err=True)
+
+    processor = StreamProcessor(
+        min_time=min_time,
+        regex_patterns=includes,
+        ignore_patterns=excludes,
+        send_fn=send,
+    )
+
+    try:
+        _run_stream_loop(sys.stdin, processor, swallow)
+    except ReportingInError:
+        # Strict-mode failure already reported; propagate the exit code.
+        sys.exit(exit_code)
+    except KeyboardInterrupt:
+        # Best-effort flush on Ctrl-C; ignore further errors.
+        with contextlib.suppress(ReportingInError):
+            processor.flush_pending()
+        sys.exit(exit_code)
+
+
+def _run_stream_loop(stdin: object, processor: StreamProcessor, swallow: bool) -> None:
+    """Drive the StreamProcessor from ``stdin``.
+
+    AIDEV-NOTE: Real stdin goes through the ``os.read`` path so we can ``select``
+    on the raw fd and handle the debounce-flush timeout. Python's BufferedReader
+    would read multiple lines into its own buffer on a single syscall, leaving
+    ``select`` blind to already-buffered lines; reading raw bytes avoids that.
+    When ``stdin`` has no fd (e.g. Click's CliRunner in tests), fall back to
+    plain line iteration — no flush timer, but the EOF flush still runs.
+    """
+    fd = _try_fileno(stdin)
+    if fd is None:
+        for line in stdin:  # type: ignore[attr-defined]
+            _handle_line(line, processor, swallow)
+        processor.flush_pending()
+        return
+
+    pending_bytes = b""
+    while True:
+        timeout = processor.time_until_next_flush()
+        ready, _, _ = select.select([fd], [], [], timeout)
+        if not ready:
+            processor.flush_if_due()
+            continue
+
+        chunk = os.read(fd, 4096)
+        if not chunk:
+            # EOF: flush any trailing unterminated line, then any pending message.
+            if pending_bytes:
+                _handle_line(pending_bytes.decode("utf-8", errors="replace"), processor, swallow)
+            processor.flush_pending()
+            return
+
+        pending_bytes += chunk
+        while (newline_idx := pending_bytes.find(b"\n")) != -1:
+            line_bytes = pending_bytes[: newline_idx + 1]
+            pending_bytes = pending_bytes[newline_idx + 1 :]
+            # AIDEV-NOTE: Decode each complete line independently so multi-byte
+            # UTF-8 sequences split across os.read boundaries still decode
+            # cleanly (a well-formed line contains only complete codepoints).
+            _handle_line(line_bytes.decode("utf-8", errors="replace"), processor, swallow)
+
+
+def _try_fileno(stream: object) -> int | None:
+    """Return ``stream.fileno()`` if it points at a real OS fd, else ``None``."""
+    try:
+        fd: int = stream.fileno()  # type: ignore[attr-defined]
+    except (AttributeError, OSError, ValueError):
+        return None
+    # AIDEV-NOTE: ``os.fstat`` confirms the fd is a real OS handle. Click's
+    # CliRunner wraps stdin in an in-memory stream whose ``fileno`` may raise
+    # or point at an unusable fd; ``fstat`` gives us a reliable probe.
+    try:
+        os.fstat(fd)
+    except OSError:
+        return None
+    return fd
+
+
+def _handle_line(line: str, processor: StreamProcessor, swallow: bool) -> None:
+    if not swallow:
+        sys.stdout.write(line)
+        sys.stdout.flush()
+    processor.process_line(line)
 
 
 @cli.command()

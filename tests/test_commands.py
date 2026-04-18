@@ -366,6 +366,243 @@ submit:
         assert result.exit_code == 0
 
 
+class TestStreamCommand:
+    """Test the stream command.
+
+    AIDEV-NOTE: These tests use ``--min-time 0`` so every eligible line is
+    submitted immediately. Debounce/timing semantics are covered by the unit
+    tests in ``test_stream.py``. Click's CliRunner provides stdin via an
+    in-memory stream without a real fd, so ``_run_stream_loop`` hits the
+    fallback line-iteration path.
+    """
+
+    @responses.activate
+    def test_stream_submits_each_line(self, runner: CliRunner) -> None:
+        responses.add(
+            responses.POST,
+            "http://localhost:7828/status",
+            json={"success": True, "job": {"status": "progress"}},
+            status=201,
+        )
+
+        result = runner.invoke(
+            cli,
+            ["stream", "-g", "test-group", "-j", "test-job", "--min-time", "0"],
+            input="line one\nline two\nline three\n",
+        )
+
+        assert result.exit_code == 0
+        assert len(responses.calls) == 3
+        bodies = [json.loads(call.request.body) for call in responses.calls]
+        assert [b["message"] for b in bodies] == ["line one", "line two", "line three"]
+        assert all(b["status"] == "progress" for b in bodies)
+        assert all(b["group"] == "test-group" and b["job"] == "test-job" for b in bodies)
+
+    @responses.activate
+    def test_stream_echoes_by_default(self, runner: CliRunner) -> None:
+        responses.add(
+            responses.POST,
+            "http://localhost:7828/status",
+            json={"success": True, "job": {"status": "progress"}},
+            status=201,
+        )
+
+        result = runner.invoke(
+            cli,
+            ["stream", "-g", "g", "-j", "j", "--min-time", "0"],
+            input="hello\nworld\n",
+        )
+
+        assert result.exit_code == 0
+        assert "hello" in result.output
+        assert "world" in result.output
+
+    @responses.activate
+    def test_stream_swallow_suppresses_echo(self, runner: CliRunner) -> None:
+        responses.add(
+            responses.POST,
+            "http://localhost:7828/status",
+            json={"success": True, "job": {"status": "progress"}},
+            status=201,
+        )
+
+        result = runner.invoke(
+            cli,
+            ["stream", "-g", "g", "-j", "j", "--min-time", "0", "--swallow"],
+            input="secret\n",
+        )
+
+        assert result.exit_code == 0
+        assert "secret" not in result.output
+        assert len(responses.calls) == 1
+
+    @responses.activate
+    def test_stream_regex_filter(self, runner: CliRunner) -> None:
+        responses.add(
+            responses.POST,
+            "http://localhost:7828/status",
+            json={"success": True, "job": {"status": "progress"}},
+            status=201,
+        )
+
+        result = runner.invoke(
+            cli,
+            [
+                "stream",
+                "-g",
+                "g",
+                "-j",
+                "j",
+                "--min-time",
+                "0",
+                "--regex",
+                "ERROR",
+                "--regex",
+                "WARN",
+            ],
+            input="INFO start\nERROR boom\nDEBUG idle\nWARN slow\n",
+        )
+
+        assert result.exit_code == 0
+        messages = [json.loads(call.request.body)["message"] for call in responses.calls]
+        assert messages == ["ERROR boom", "WARN slow"]
+
+    @responses.activate
+    def test_stream_ignore_filter(self, runner: CliRunner) -> None:
+        responses.add(
+            responses.POST,
+            "http://localhost:7828/status",
+            json={"success": True, "job": {"status": "progress"}},
+            status=201,
+        )
+
+        result = runner.invoke(
+            cli,
+            [
+                "stream",
+                "-g",
+                "g",
+                "-j",
+                "j",
+                "--min-time",
+                "0",
+                "--ignore",
+                "heartbeat",
+            ],
+            input="work started\nheartbeat\nwork done\n",
+        )
+
+        assert result.exit_code == 0
+        messages = [json.loads(call.request.body)["message"] for call in responses.calls]
+        assert messages == ["work started", "work done"]
+
+    @responses.activate
+    def test_stream_ignore_case(self, runner: CliRunner) -> None:
+        responses.add(
+            responses.POST,
+            "http://localhost:7828/status",
+            json={"success": True, "job": {"status": "progress"}},
+            status=201,
+        )
+
+        result = runner.invoke(
+            cli,
+            [
+                "stream",
+                "-g",
+                "g",
+                "-j",
+                "j",
+                "--min-time",
+                "0",
+                "--regex",
+                "error",
+                "--ignore-case",
+            ],
+            input="ERROR big\nError small\nnothing\n",
+        )
+
+        assert result.exit_code == 0
+        messages = [json.loads(call.request.body)["message"] for call in responses.calls]
+        assert messages == ["ERROR big", "Error small"]
+
+    @responses.activate
+    def test_stream_strips_ansi(self, runner: CliRunner) -> None:
+        responses.add(
+            responses.POST,
+            "http://localhost:7828/status",
+            json={"success": True, "job": {"status": "progress"}},
+            status=201,
+        )
+
+        result = runner.invoke(
+            cli,
+            ["stream", "-g", "g", "-j", "j", "--min-time", "0"],
+            input="\x1b[32mdone\x1b[0m\n",
+        )
+
+        assert result.exit_code == 0
+        messages = [json.loads(call.request.body)["message"] for call in responses.calls]
+        assert messages == ["done"]
+
+    @responses.activate
+    def test_stream_lenient_mode_continues_on_error(self, runner: CliRunner) -> None:
+        # AIDEV-NOTE: Can't use ``responses`` here because we want one call to
+        # succeed and another to fail; sequencing with responses is awkward.
+        # We just simulate outright connection failure and verify the stream
+        # swallows it and exits 0.
+        responses.add(
+            responses.POST,
+            "http://localhost:7828/status",
+            body=requests.exceptions.ConnectionError("boom"),
+        )
+
+        result = runner.invoke(
+            cli,
+            ["stream", "-g", "g", "-j", "j", "--min-time", "0"],
+            input="alpha\nbeta\n",
+        )
+
+        assert result.exit_code == 0
+        assert "Warning:" in result.output
+
+    @responses.activate
+    def test_stream_strict_mode_exits_on_error(self, runner: CliRunner) -> None:
+        responses.add(
+            responses.POST,
+            "http://localhost:7828/status",
+            body=requests.exceptions.ConnectionError("boom"),
+        )
+
+        result = runner.invoke(
+            cli,
+            ["stream", "-g", "g", "-j", "j", "--min-time", "0", "--strict"],
+            input="alpha\nbeta\n",
+        )
+
+        assert result.exit_code == ExitCode.ERROR_CONNECTION
+
+    def test_stream_invalid_regex(self, runner: CliRunner) -> None:
+        result = runner.invoke(
+            cli,
+            ["stream", "-g", "g", "-j", "j", "--regex", "[unclosed"],
+            input="",
+        )
+
+        assert result.exit_code == ExitCode.ERROR_INVALID_ARGS
+        assert "Invalid regex" in result.output
+
+    def test_stream_negative_min_time_rejected(self, runner: CliRunner) -> None:
+        result = runner.invoke(
+            cli,
+            ["stream", "-g", "g", "-j", "j", "--min-time", "-1"],
+            input="",
+        )
+
+        assert result.exit_code != 0
+        assert "Invalid value" in result.output
+
+
 class TestGroupsCommand:
     """Test the groups command."""
 
