@@ -53,7 +53,7 @@ jobs:
         run: uv build
       - name: Check metadata
         run: uvx twine check dist/*
-      - uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882  # v4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
           name: python-dist
           path: dist/
@@ -98,7 +98,7 @@ jobs:
           for f in ../*.deb; do
             cp "$f" "out/$(basename "${f%.deb}")_${{ matrix.distro }}-${{ matrix.release }}.deb"
           done
-      - uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882  # v4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
           name: deb-${{ matrix.distro }}-${{ matrix.release }}
           path: out/*.deb
@@ -139,7 +139,7 @@ jobs:
             python3-click python3-requests python3-pyyaml \
             python3-pytest python3-responses $EL9_DEPS
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
         with:
           name: python-dist
           path: dist/
@@ -152,7 +152,7 @@ jobs:
           rpmbuild -bb ~/rpmbuild/SPECS/statshed-cli.spec
           mkdir -p out
           cp ~/rpmbuild/RPMS/noarch/*.rpm out/
-      - uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882  # v4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
           name: rpm-${{ matrix.tag }}
           path: out/*.rpm
@@ -168,7 +168,7 @@ jobs:
     permissions:
       id-token: write
     steps:
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
         with:
           name: python-dist
           path: dist/
@@ -188,7 +188,7 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
         with:
           path: artifacts/
       - name: Create release and attach all artifacts
