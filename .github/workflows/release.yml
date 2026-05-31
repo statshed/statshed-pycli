@@ -142,7 +142,7 @@ jobs:
           cp dist/statshed_cli-*.tar.gz ~/rpmbuild/SOURCES/
           cp packaging/rpm/statshed-cli.spec ~/rpmbuild/SPECS/
           rpmbuild -br ~/rpmbuild/SPECS/statshed-cli.spec || true
-          SRPM=$(ls ~/rpmbuild/SRPMS/*.buildreqs.nosrc.rpm ~/rpmbuild/SRPMS/*.src.rpm 2>/dev/null | head -1)
+          SRPM=$(find ~/rpmbuild/SRPMS -maxdepth 1 \( -name '*.buildreqs.nosrc.rpm' -o -name '*.src.rpm' \) | head -1)
           dnf builddep -y "$SRPM"
           rpmbuild -bb ~/rpmbuild/SPECS/statshed-cli.spec
           mkdir -p out
