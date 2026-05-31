@@ -9,8 +9,8 @@ import requests
 import responses
 from click.testing import CliRunner
 
-from reportingin_cli.errors import ExitCode
-from reportingin_cli.main import cli
+from statshed_cli.errors import ExitCode
+from statshed_cli.main import cli
 
 
 @pytest.fixture
@@ -204,7 +204,7 @@ submit:
   syslog: true
   syslog_facility: local0
 """)
-        monkeypatch.setenv("REPORTINGIN_CONFIG", str(config_file))
+        monkeypatch.setenv("STATSHED_CONFIG", str(config_file))
 
         responses.add(
             responses.POST,
@@ -212,7 +212,7 @@ submit:
             body=requests.exceptions.ConnectionError("Connection refused"),
         )
 
-        with mock.patch("reportingin_cli.logging.log_to_syslog") as mock_syslog:
+        with mock.patch("statshed_cli.logging.log_to_syslog") as mock_syslog:
             result = runner.invoke(cli, ["submit", "-g", "test", "-j", "test", "-s", "success"])
             # Lenient mode should exit 0
             assert result.exit_code == 0
@@ -1172,7 +1172,7 @@ class TestCompletionCommand:
         """Test fish completion script generation."""
         result = runner.invoke(cli, ["completion", "fish"])
         assert result.exit_code == 0
-        assert "complete -c reportingin" in result.output
+        assert "complete -c statshed" in result.output
 
     def test_completion_invalid_shell(self, runner: CliRunner) -> None:
         """Test that invalid shell name is rejected."""
@@ -1221,6 +1221,6 @@ class TestGlobalOptions:
         """Test --help option."""
         result = runner.invoke(cli, ["--help"])
         assert result.exit_code == 0
-        assert "Reporting In CLI" in result.output
+        assert "StatShed CLI" in result.output
         assert "health" in result.output
         assert "submit" in result.output

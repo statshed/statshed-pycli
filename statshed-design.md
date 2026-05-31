@@ -1,11 +1,11 @@
-# Reporting In - Status Dashboard Design Document
+# StatShed - Status Dashboard Design Document
 
 A real-time status dashboard for monitoring cluster job operations.
 
 ## Project Overview
 
 ```
-reportingin/
+statshed/
 ├── backend/          # Flask API + SQLite + WebSocket
 ├── frontend/         # React app (Vite)
 ├── cli/              # Python CLI tool
@@ -122,9 +122,9 @@ curl -X PUT http://localhost:7828/config \
 
 ```bash
 # Submit status via CLI
-reportingin submit --group backups --job db-backup --status success
-reportingin submit --group backups --job db-backup --status error --message "Disk full"
-reportingin submit -g backups -j db-backup -s progress -m "Running..."
+statshed submit --group backups --job db-backup --status success
+statshed submit --group backups --job db-backup --status error --message "Disk full"
+statshed submit -g backups -j db-backup -s progress -m "Running..."
 ```
 
 ## Database Schema

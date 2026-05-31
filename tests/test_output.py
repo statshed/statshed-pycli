@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from reportingin_cli.output import (
+from statshed_cli.output import (
     RICH_AVAILABLE,
     JsonFormatter,
     PlainFormatter,

@@ -1,7 +1,7 @@
-"""API client for Reporting In backend.
+"""API client for StatShed backend.
 
 AIDEV-NOTE: All API interactions go through the ApiClient class.
-Errors are converted to Reporting In exceptions with appropriate exit codes.
+Errors are converted to StatShed exceptions with appropriate exit codes.
 Retry logic handles transient failures (connection errors, timeouts).
 """
 
@@ -13,7 +13,7 @@ from urllib.parse import quote, urljoin
 
 import requests
 
-from reportingin_cli.errors import (
+from statshed_cli.errors import (
     ApiError,
     ConnectionError,
     NotFoundError,
@@ -22,10 +22,10 @@ from reportingin_cli.errors import (
 
 
 class ApiClient:
-    """Client for interacting with the Reporting In API.
+    """Client for interacting with the StatShed API.
 
     AIDEV-NOTE: This client wraps requests and converts HTTP errors
-    to Reporting In exceptions. All methods can raise:
+    to StatShed exceptions. All methods can raise:
     - ConnectionError: Server unreachable
     - TimeoutError: Request timed out
     - ApiError: Server returned an error
@@ -45,7 +45,7 @@ class ApiClient:
         """Initialize the API client.
 
         Args:
-            base_url: Base URL of the Reporting In API
+            base_url: Base URL of the StatShed API
             timeout: Request timeout in seconds
             retries: Number of retries for transient failures (0 = no retries)
             retry_delay: Base delay between retries in seconds

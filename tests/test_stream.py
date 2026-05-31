@@ -9,7 +9,7 @@ import re
 
 import pytest
 
-from reportingin_cli.stream import (
+from statshed_cli.stream import (
     ANSI_ESCAPE_RE,
     StreamProcessor,
     clean_line,

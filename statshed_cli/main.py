@@ -1,4 +1,4 @@
-"""Reporting In CLI - Command-line interface entry point.
+"""StatShed CLI - Command-line interface entry point.
 
 AIDEV-NOTE: This is the main CLI module using Click. Global options are
 defined on the cli() group and passed via context to subcommands.
@@ -13,25 +13,25 @@ import tempfile
 
 import click
 
-from reportingin_cli.client import ApiClient
-from reportingin_cli.completion import (
+from statshed_cli.client import ApiClient
+from statshed_cli.completion import (
     complete_group_names,
     complete_job_names,
     complete_status_values,
     get_completion_script,
 )
-from reportingin_cli.config import Config
-from reportingin_cli.errors import (
+from statshed_cli.config import Config
+from statshed_cli.errors import (
     ConfigError,
     ExitCode,
     NotFoundError,
-    ReportingInError,
+    StatShedError,
     get_exit_code,
 )
-from reportingin_cli.logging import log_submit_error
-from reportingin_cli.output import JsonFormatter, OutputFormatter, get_formatter
-from reportingin_cli.stream import StreamProcessor, compile_patterns
-from reportingin_cli.wrap import run_wrapped
+from statshed_cli.logging import log_submit_error
+from statshed_cli.output import JsonFormatter, OutputFormatter, get_formatter
+from statshed_cli.stream import StreamProcessor, compile_patterns
+from statshed_cli.wrap import run_wrapped
 
 
 class Context:
@@ -73,14 +73,14 @@ pass_context = click.make_pass_decorator(Context, ensure=True)
 @click.option(
     "--url",
     "-u",
-    envvar="REPORTINGIN_URL",
-    help="Reporting In API URL",
+    envvar="STATSHED_URL",
+    help="StatShed API URL",
 )
 @click.option(
     "--config",
     "-c",
     "config_path",
-    envvar="REPORTINGIN_CONFIG",
+    envvar="STATSHED_CONFIG",
     help="Path to config file",
 )
 @click.option(
@@ -100,7 +100,7 @@ pass_context = click.make_pass_decorator(Context, ensure=True)
     is_flag=True,
     help="Output in JSON format",
 )
-@click.version_option(package_name="reportingin-cli")
+@click.version_option(package_name="statshed-cli")
 @pass_context
 def cli(
     ctx: Context,
@@ -110,7 +110,7 @@ def cli(
     no_color: bool,
     json_output: bool,
 ) -> None:
-    """Reporting In CLI - Command-line interface for Reporting In status dashboard."""
+    """StatShed CLI - Command-line interface for StatShed status dashboard."""
     try:
         ctx.config = Config.from_sources(
             config_path=config_path,
@@ -143,7 +143,7 @@ def health(ctx: Context, json_output: bool) -> None:
         if data.get("status") in ("unhealthy",):
             sys.exit(ExitCode.ERROR_UNHEALTHY)
 
-    except ReportingInError as e:
+    except StatShedError as e:
         err_formatter: OutputFormatter = ctx.get_formatter()
         click.echo(err_formatter.error(str(e)), err=True)
         sys.exit(get_exit_code(e))
@@ -212,7 +212,7 @@ def submit(
             if warning:
                 click.echo(f"Warning: {warning}", err=True)
 
-    except ReportingInError as e:
+    except StatShedError as e:
         if use_strict:
             err_formatter: OutputFormatter = ctx.get_formatter()
             click.echo(err_formatter.error(str(e)), err=True)
@@ -305,7 +305,7 @@ def stream(
         nonlocal exit_code
         try:
             client.submit_status(group, job, "progress", message, None)
-        except ReportingInError as e:
+        except StatShedError as e:
             if use_strict:
                 err_formatter: OutputFormatter = ctx.get_formatter()
                 click.echo(err_formatter.error(str(e)), err=True)
@@ -325,12 +325,12 @@ def stream(
 
     try:
         _run_stream_loop(sys.stdin, processor, swallow)
-    except ReportingInError:
+    except StatShedError:
         # Strict-mode failure already reported; propagate the exit code.
         sys.exit(exit_code)
     except KeyboardInterrupt:
         # Best-effort flush on Ctrl-C; ignore further errors.
-        with contextlib.suppress(ReportingInError):
+        with contextlib.suppress(StatShedError):
             processor.flush_pending()
         sys.exit(exit_code)
 
@@ -497,8 +497,8 @@ def wrap(
     Use ``--`` to separate wrapper options from the wrapped command:
 
     \b
-        reportingin wrap -g misc -j current-time -- date
-        reportingin wrap -g ci -j build --report-exit -- make all
+        statshed wrap -g misc -j current-time -- date
+        statshed wrap -g ci -j build --report-exit -- make all
     """
     assert ctx.config is not None
 
@@ -520,7 +520,7 @@ def wrap(
         nonlocal wrapper_exit_code
         try:
             client.submit_status(group, job, "progress", message, None)
-        except ReportingInError as e:
+        except StatShedError as e:
             if use_strict:
                 err_formatter: OutputFormatter = ctx.get_formatter()
                 click.echo(err_formatter.error(str(e)), err=True)
@@ -543,7 +543,7 @@ def wrap(
     log_path: str | None = None
     log_file = None
     if attach_log:
-        log_fd, log_path = tempfile.mkstemp(prefix="reportingin-wrap-", suffix=".log")
+        log_fd, log_path = tempfile.mkstemp(prefix="statshed-wrap-", suffix=".log")
         log_file = os.fdopen(log_fd, "wb")
 
     child_exit_code = 0
@@ -557,19 +557,19 @@ def wrap(
                 swallow=swallow,
                 log_file=log_file,
             )
-        except ReportingInError:
+        except StatShedError:
             # Strict-mode submission failure during the run; exit already set.
             sys.exit(wrapper_exit_code)
         except FileNotFoundError as e:
-            click.echo(f"reportingin wrap: {e}", err=True)
+            click.echo(f"statshed wrap: {e}", err=True)
             sys.exit(ExitCode.ERROR_INVALID_ARGS)
         except PermissionError as e:
-            click.echo(f"reportingin wrap: {e}", err=True)
+            click.echo(f"statshed wrap: {e}", err=True)
             sys.exit(ExitCode.ERROR_INVALID_ARGS)
         except KeyboardInterrupt:
             # run_wrapped forwards SIGINT to the child, so we shouldn't normally
             # land here — but if we do, flush anything pending and bail.
-            with contextlib.suppress(ReportingInError):
+            with contextlib.suppress(StatShedError):
                 processor.flush_pending()
             sys.exit(wrapper_exit_code)
 
@@ -582,7 +582,7 @@ def wrap(
                 attach_path = log_path
             try:
                 client.submit_status(group, job, final_status, final_message, attach_path)
-            except ReportingInError as e:
+            except StatShedError as e:
                 if use_strict:
                     err_formatter = ctx.get_formatter()
                     click.echo(err_formatter.error(str(e)), err=True)
@@ -622,7 +622,7 @@ def groups(ctx: Context, json_output: bool) -> None:
         )
         ctx.output(formatter.groups(data))
 
-    except ReportingInError as e:
+    except StatShedError as e:
         err_formatter: OutputFormatter = ctx.get_formatter()
         click.echo(err_formatter.error(str(e)), err=True)
         sys.exit(get_exit_code(e))
@@ -647,7 +647,7 @@ def jobs(ctx: Context, group_name: str, json_output: bool) -> None:
         err_formatter: OutputFormatter = ctx.get_formatter()
         click.echo(err_formatter.error(f"Group '{group_name}' not found"), err=True)
         sys.exit(ExitCode.ERROR_NOT_FOUND)
-    except ReportingInError as e:
+    except StatShedError as e:
         err_formatter2: OutputFormatter = ctx.get_formatter()
         click.echo(err_formatter2.error(str(e)), err=True)
         sys.exit(get_exit_code(e))
@@ -686,7 +686,7 @@ def config_cmd(
         )
         ctx.output(formatter.config(data))
 
-    except ReportingInError as e:
+    except StatShedError as e:
         err_formatter: OutputFormatter = ctx.get_formatter()
         click.echo(err_formatter.error(str(e)), err=True)
         sys.exit(get_exit_code(e))
@@ -744,7 +744,7 @@ def group_config_cmd(
         err_formatter: OutputFormatter = ctx.get_formatter()
         click.echo(err_formatter.error(f"Group '{group_name}' not found"), err=True)
         sys.exit(ExitCode.ERROR_NOT_FOUND)
-    except ReportingInError as e:
+    except StatShedError as e:
         err_formatter2: OutputFormatter = ctx.get_formatter()
         click.echo(err_formatter2.error(str(e)), err=True)
         sys.exit(get_exit_code(e))
@@ -759,9 +759,9 @@ def completion(shell: str) -> None:
     Install by redirecting output to the appropriate location:
 
     \b
-    Bash: reportingin completion bash > ~/.local/share/bash-completion/completions/reportingin
-    Zsh:  reportingin completion zsh > ~/.zfunc/_reportingin
-    Fish: reportingin completion fish > ~/.config/fish/completions/reportingin.fish
+    Bash: statshed completion bash > ~/.local/share/bash-completion/completions/statshed
+    Zsh:  statshed completion zsh > ~/.zfunc/_statshed
+    Fish: statshed completion fish > ~/.config/fish/completions/statshed.fish
     """
     script = get_completion_script(shell)
     click.echo(script)

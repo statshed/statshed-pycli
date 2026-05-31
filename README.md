@@ -1,18 +1,18 @@
-# Reporting In CLI
+# StatShed CLI
 
-[![Tests](https://github.com/reportingin/reportingin-cli/actions/workflows/test.yml/badge.svg)](https://github.com/reportingin/reportingin-cli/actions/workflows/test.yml)
+[![Tests](https://github.com/statshed/statshed-cli/actions/workflows/test.yml/badge.svg)](https://github.com/statshed/statshed-cli/actions/workflows/test.yml)
 
-Command-line interface for the Reporting In status dashboard.
+Command-line interface for the StatShed status dashboard.
 
 ## Installation
 
 ```bash
-pip install reportingin-cli
+pip install statshed-cli
 ```
 
 For rich terminal output:
 ```bash
-pip install reportingin-cli[rich]
+pip install statshed-cli[rich]
 ```
 
 ## Usage
@@ -21,57 +21,57 @@ pip install reportingin-cli[rich]
 
 ```bash
 # Submit a success status
-reportingin submit -g nightly-builds -j backend-tests -s success -m "All tests passed"
+statshed submit -g nightly-builds -j backend-tests -s success -m "All tests passed"
 
 # Submit an error status
-reportingin submit -g nightly-builds -j backend-tests -s error -m "3 tests failed"
+statshed submit -g nightly-builds -j backend-tests -s error -m "3 tests failed"
 
 # Submit a progress status
-reportingin submit -g nightly-builds -j backend-tests -s progress -m "Running tests..."
+statshed submit -g nightly-builds -j backend-tests -s progress -m "Running tests..."
 ```
 
 ### Check System Health
 
 ```bash
-reportingin health
+statshed health
 ```
 
 ### List Groups
 
 ```bash
-reportingin groups
+statshed groups
 ```
 
 ### List Jobs in a Group
 
 ```bash
-reportingin jobs nightly-builds
+statshed jobs nightly-builds
 ```
 
 ### View/Update Configuration
 
 ```bash
 # View global config
-reportingin config
+statshed config
 
 # Update global config
-reportingin config --progress-timeout 10 --staleness-timeout 48
+statshed config --progress-timeout 10 --staleness-timeout 48
 
 # View group config
-reportingin group-config nightly-builds
+statshed group-config nightly-builds
 
 # Update group config
-reportingin group-config nightly-builds --progress-timeout 15
+statshed group-config nightly-builds --progress-timeout 15
 ```
 
 ## Configuration File
 
 The CLI reads configuration from these locations (in order of precedence):
 
-1. Path specified via `--config` or `REPORTINGIN_CONFIG` environment variable
-2. `./reportingin.yaml` (current directory)
-3. `~/.config/reportingin/reportingin.yaml`
-4. `/etc/reportingin/reportingin.yaml`
+1. Path specified via `--config` or `STATSHED_CONFIG` environment variable
+2. `./statshed.yaml` (current directory)
+3. `~/.config/statshed/statshed.yaml`
+4. `/etc/statshed/statshed.yaml`
 
 Example configuration:
 
@@ -88,8 +88,8 @@ submit:
 
 ## Environment Variables
 
-- `REPORTINGIN_URL`: API server URL
-- `REPORTINGIN_CONFIG`: Path to configuration file
+- `STATSHED_URL`: API server URL
+- `STATSHED_CONFIG`: Path to configuration file
 - `NO_COLOR`: Disable colored output
 
 ## Exit Codes
@@ -107,7 +107,7 @@ submit:
 
 ## Shell Completion
 
-Reporting In CLI provides shell completion for Bash, Zsh, and Fish. The completion includes:
+StatShed CLI provides shell completion for Bash, Zsh, and Fish. The completion includes:
 
 - Command and option names
 - Dynamic group name completion (queries the API)
@@ -122,10 +122,10 @@ Reporting In CLI provides shell completion for Bash, Zsh, and Fish. The completi
 mkdir -p ~/.local/share/bash-completion/completions
 
 # Generate and install the completion script
-reportingin completion bash > ~/.local/share/bash-completion/completions/reportingin
+statshed completion bash > ~/.local/share/bash-completion/completions/statshed
 
 # Reload your shell or source the file
-source ~/.local/share/bash-completion/completions/reportingin
+source ~/.local/share/bash-completion/completions/statshed
 ```
 
 **Zsh:**
@@ -138,7 +138,7 @@ mkdir -p ~/.zfunc
 # autoload -Uz compinit && compinit
 
 # Generate and install the completion script
-reportingin completion zsh > ~/.zfunc/_reportingin
+statshed completion zsh > ~/.zfunc/_statshed
 
 # Reload completions
 autoload -Uz compinit && compinit
@@ -150,20 +150,20 @@ autoload -Uz compinit && compinit
 mkdir -p ~/.config/fish/completions
 
 # Generate and install the completion script
-reportingin completion fish > ~/.config/fish/completions/reportingin.fish
+statshed completion fish > ~/.config/fish/completions/statshed.fish
 ```
 
 ### Dynamic Completion
 
-The shell completion queries the Reporting In API to provide contextual suggestions:
+The shell completion queries the StatShed API to provide contextual suggestions:
 
 - When completing group names (`--group` or group arguments), available groups are fetched from the server
 - When completing job names (`--job`), jobs from the specified group are fetched
 - If the server is unavailable, completion falls back to basic suggestions
 
-Set `REPORTINGIN_URL` environment variable if your server is not at the default location:
+Set `STATSHED_URL` environment variable if your server is not at the default location:
 ```bash
-export REPORTINGIN_URL=https://reportingin.example.com
+export STATSHED_URL=https://statshed.example.com
 ```
 
 ## Common Use Cases
@@ -176,7 +176,7 @@ jobs:
     steps:
       - name: Report build start
         run: |
-          reportingin submit -g ci-builds -j "${{ github.repository }}" \
+          statshed submit -g ci-builds -j "${{ github.repository }}" \
             -s progress -m "Build started: ${{ github.sha }}"
 
       - name: Build
@@ -185,13 +185,13 @@ jobs:
       - name: Report build success
         if: success()
         run: |
-          reportingin submit -g ci-builds -j "${{ github.repository }}" \
+          statshed submit -g ci-builds -j "${{ github.repository }}" \
             -s success -m "Build passed: ${{ github.sha }}"
 
       - name: Report build failure
         if: failure()
         run: |
-          reportingin submit -g ci-builds -j "${{ github.repository }}" \
+          statshed submit -g ci-builds -j "${{ github.repository }}" \
             -s error -m "Build failed: ${{ github.sha }}"
 ```
 
@@ -204,13 +204,13 @@ For safe use with `set -eu` (script exits on error), use the default lenient mod
 set -eu
 
 # Submit commands won't cause script to exit on API errors
-reportingin submit -g backups -j database -s progress -m "Starting backup"
+statshed submit -g backups -j database -s progress -m "Starting backup"
 
 # Do the actual backup
 pg_dump mydb > /backups/mydb.sql
 
 # Report success
-reportingin submit -g backups -j database -s success -m "Backup completed"
+statshed submit -g backups -j database -s success -m "Backup completed"
 ```
 
 For manual error handling with strict mode:
@@ -218,7 +218,7 @@ For manual error handling with strict mode:
 ```bash
 #!/bin/bash
 
-if ! reportingin submit --strict -g backups -j database -s progress; then
+if ! statshed submit --strict -g backups -j database -s progress; then
     echo "Warning: Could not report status to dashboard"
 fi
 
@@ -226,9 +226,9 @@ pg_dump mydb > /backups/mydb.sql
 backup_status=$?
 
 if [ $backup_status -eq 0 ]; then
-    reportingin submit -g backups -j database -s success
+    statshed submit -g backups -j database -s success
 else
-    reportingin submit -g backups -j database -s error -m "Backup failed with code $backup_status"
+    statshed submit -g backups -j database -s error -m "Backup failed with code $backup_status"
 fi
 ```
 
@@ -236,19 +236,19 @@ fi
 
 ```bash
 # Check overall health with rich output
-$ reportingin health
+$ statshed health
 
 # List groups with status summary
-$ reportingin groups
+$ statshed groups
 
 # Drill into a specific group
-$ reportingin jobs nightly-builds
+$ statshed jobs nightly-builds
 
 # Check group-specific timeout configuration
-$ reportingin group-config nightly-builds
+$ statshed group-config nightly-builds
 
 # Update group timeout (builds can take longer)
-$ reportingin group-config nightly-builds --progress-timeout 30
+$ statshed group-config nightly-builds --progress-timeout 30
 ```
 
 ### Script Integration with Error Logging to Syslog
@@ -256,8 +256,8 @@ $ reportingin group-config nightly-builds --progress-timeout 30
 Enable syslog logging for daemon/cron scenarios where stderr may not be monitored:
 
 ```yaml
-# ~/.config/reportingin/reportingin.yaml
-url: https://reportingin.example.com
+# ~/.config/statshed/statshed.yaml
+url: https://statshed.example.com
 submit:
   syslog: true
   syslog_facility: local0
@@ -271,12 +271,12 @@ submit:
 Error: Could not connect to http://localhost:7828: Connection refused
 ```
 
-**Cause**: The Reporting In backend is not running or is running on a different port.
+**Cause**: The StatShed backend is not running or is running on a different port.
 
 **Solution**:
 - Verify the backend is running: `curl http://localhost:7828/health`
 - Check the URL with `--url` or in config file
-- Set `REPORTINGIN_URL` environment variable
+- Set `STATSHED_URL` environment variable
 
 ### Request Timeout
 
@@ -301,7 +301,7 @@ Error: Group 'nonexistent' not found
 
 **Solution**:
 - Groups are auto-created on first status submission
-- Submit a status to create the group: `reportingin submit -g newgroup -j newjob -s success`
+- Submit a status to create the group: `statshed submit -g newgroup -j newjob -s success`
 
 ### Invalid Configuration File
 
@@ -335,7 +335,7 @@ uv sync --extra dev
 pytest
 
 # Run tests with coverage
-pytest --cov=reportingin_cli
+pytest --cov=statshed_cli
 
 # Format code
 ruff format .
@@ -344,7 +344,7 @@ ruff format .
 ruff check .
 
 # Type check
-mypy reportingin_cli
+mypy statshed_cli
 ```
 
 ## Building a Debian Package
@@ -366,7 +366,7 @@ The built `.deb` file will be placed in the parent directory (`../`).
 ### Installing the Package
 
 ```bash
-sudo dpkg -i ../reportingin-cli_*.deb
+sudo dpkg -i ../statshed-cli_*.deb
 
 # Install any missing dependencies
 sudo apt install -f

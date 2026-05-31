@@ -4,9 +4,9 @@ import pytest
 import requests
 import responses
 
-from reportingin_cli.client import ApiClient
-from reportingin_cli.errors import ApiError, NotFoundError
-from reportingin_cli.errors import ConnectionError as ReportingInConnectionError
+from statshed_cli.client import ApiClient
+from statshed_cli.errors import ApiError, NotFoundError
+from statshed_cli.errors import ConnectionError as StatShedConnectionError
 
 
 class TestApiClientInit:
@@ -75,7 +75,7 @@ class TestApiClientHealth:
         )
 
         client = ApiClient("http://localhost:7828")
-        with pytest.raises(ReportingInConnectionError, match="Could not connect"):
+        with pytest.raises(StatShedConnectionError, match="Could not connect"):
             client.get_health()
 
 
@@ -382,7 +382,7 @@ class TestApiClientRetries:
             )
 
         client = ApiClient("http://localhost:7828", retries=2, retry_delay=0.01)
-        with pytest.raises(ReportingInConnectionError, match="Could not connect"):
+        with pytest.raises(StatShedConnectionError, match="Could not connect"):
             client.get_health()
 
         assert len(responses.calls) == 3
@@ -414,7 +414,7 @@ class TestApiClientRetries:
         )
 
         client = ApiClient("http://localhost:7828", retries=0)
-        with pytest.raises(ReportingInConnectionError):
+        with pytest.raises(StatShedConnectionError):
             client.get_health()
 
         # Only one call made
@@ -427,7 +427,7 @@ class TestApiClientTimeout:
     @responses.activate
     def test_timeout_error(self) -> None:
         """Test that timeout errors are raised correctly."""
-        from reportingin_cli.errors import TimeoutError as ReportingInTimeoutError
+        from statshed_cli.errors import TimeoutError as StatShedTimeoutError
 
         responses.add(
             responses.GET,
@@ -436,7 +436,7 @@ class TestApiClientTimeout:
         )
 
         client = ApiClient("http://localhost:7828")
-        with pytest.raises(ReportingInTimeoutError, match="timed out"):
+        with pytest.raises(StatShedTimeoutError, match="timed out"):
             client.get_health()
 
     @responses.activate
@@ -469,7 +469,7 @@ class TestApiClientTimeout:
     @responses.activate
     def test_timeout_exhausted(self) -> None:
         """Test that timeout error is raised after all retries exhausted."""
-        from reportingin_cli.errors import TimeoutError as ReportingInTimeoutError
+        from statshed_cli.errors import TimeoutError as StatShedTimeoutError
 
         # All calls timeout
         for _ in range(3):
@@ -480,7 +480,7 @@ class TestApiClientTimeout:
             )
 
         client = ApiClient("http://localhost:7828", retries=2, retry_delay=0.01)
-        with pytest.raises(ReportingInTimeoutError, match="timed out"):
+        with pytest.raises(StatShedTimeoutError, match="timed out"):
             client.get_health()
 
         assert len(responses.calls) == 3

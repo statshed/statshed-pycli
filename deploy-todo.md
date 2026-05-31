@@ -1,13 +1,13 @@
-# Reporting In CLI Deployment PRD & Implementation Checklist
+# StatShed CLI Deployment PRD & Implementation Checklist
 
-This document outlines the complete deployment strategy for reportingin-cli, including PyPI publishing, GitHub Actions CI/CD, and Debian packaging.
+This document outlines the complete deployment strategy for statshed-cli, including PyPI publishing, GitHub Actions CI/CD, and Debian packaging.
 
 ---
 
 ## Executive Summary
 
-**Goal:** Enable automated, reproducible deployment of reportingin-cli to:
-1. **PyPI** - Python Package Index for `pip install reportingin-cli`
+**Goal:** Enable automated, reproducible deployment of statshed-cli to:
+1. **PyPI** - Python Package Index for `pip install statshed-cli`
 2. **Debian packages** - `.deb` files for apt-based Linux distributions
 3. **GitHub Releases** - Binary artifacts attached to tagged releases
 
@@ -35,7 +35,7 @@ This document outlines the complete deployment strategy for reportingin-cli, inc
 **Already present** (no changes needed):
 - [x] `readme = "README.md"` ✓
 - [x] `version = "1.0.0"` ✓
-- [x] `keywords = ["reportingin", "dashboard", "cli", "status", "monitoring"]` ✓
+- [x] `keywords = ["statshed", "dashboard", "cli", "status", "monitoring"]` ✓
 - [x] `[project.urls]` section ✓
 
 **Still needed:**
@@ -52,7 +52,7 @@ This document outlines the complete deployment strategy for reportingin-cli, inc
   [tool.hatch.build.targets.sdist]
   include = [
     "pyproject.toml",  # Required for pip to build from sdist
-    "reportingin_cli/",
+    "statshed_cli/",
     "tests/",          # Included for reproducibility
     "docs/*.1",
     "LICENSE",
@@ -66,7 +66,7 @@ This document outlines the complete deployment strategy for reportingin-cli, inc
 
 ### 1.3 GitHub Repository Setup
 
-- [ ] Create GitHub repository (github.com/reportingin/reportingin-cli or your namespace)
+- [ ] Create GitHub repository (github.com/statshed/statshed-cli or your namespace)
 - [ ] Add remote: `git remote add origin <url>`
 - [ ] Push existing commits to GitHub
 - [ ] Configure branch protection rules for `main`/`master`
@@ -92,13 +92,13 @@ This document outlines the complete deployment strategy for reportingin-cli, inc
      UV_PUBLISH_TOKEN="pypi-AgEI..." uv publish  # Note: leading space
     ```
   - [ ] This reserves the name - do this early to prevent name squatting
-- [ ] Configure PyPI trusted publisher (https://pypi.org/manage/project/reportingin-cli/settings/publishing/):
+- [ ] Configure PyPI trusted publisher (https://pypi.org/manage/project/statshed-cli/settings/publishing/):
   - [ ] Add GitHub Actions as trusted publisher
   - [ ] Owner: your-github-username
-  - [ ] Repository: reportingin-cli
+  - [ ] Repository: statshed-cli
   - [ ] Workflow name: publish.yml
   - [ ] Environment name: `pypi`
-- [ ] Configure TestPyPI trusted publisher (https://test.pypi.org/manage/project/reportingin-cli/settings/publishing/):
+- [ ] Configure TestPyPI trusted publisher (https://test.pypi.org/manage/project/statshed-cli/settings/publishing/):
   - [ ] **Prerequisite:** Project must exist on TestPyPI first (upload with test.pypi.org token)
   - [ ] Add GitHub Actions as trusted publisher with environment name: `testpypi`
 
@@ -157,7 +157,7 @@ a `uv.lock` file committed to the repository. The lockfile already exists.
 - [x] Inspect generated wheel for correct files ✓
 - [x] Inspect generated sdist for correct files: ✓
   - [x] Verify man page is included (after Phase 2.5) ✓
-  - [x] Run: `tar -tzf dist/reportingin_cli-*.tar.gz | grep reportingin.1` ✓
+  - [x] Run: `tar -tzf dist/statshed_cli-*.tar.gz | grep statshed.1` ✓
 - [x] Ensure `__version__` in `__init__.py` matches pyproject.toml ✓
 
 ### 3.2 Version Management Strategy
@@ -185,8 +185,8 @@ a `uv.lock` file committed to the repository. The lockfile already exists.
   - [x] Build package locally ✓
   - [x] Install in fresh virtual environment ✓
   - [x] Run smoke tests against installed package ✓
-  - [x] Verify entry point works: `reportingin --help` ✓
-  - [x] Verify sub-commands work: `reportingin health --help` ✓
+  - [x] Verify entry point works: `statshed --help` ✓
+  - [x] Verify sub-commands work: `statshed health --help` ✓
 - [x] Test installation with `pip install .` ✓ (via test-package.sh)
 - [ ] Test installation with `pipx install .`
 - [x] Test optional dependencies: `pip install .[rich]` ✓ (via test-package.sh)
@@ -206,8 +206,8 @@ a `uv.lock` file committed to the repository. The lockfile already exists.
 
 - [x] Create `debian/` directory ✓
 - [x] Create `debian/control`: ✓
-  - [x] Source package name: `reportingin-cli` ✓
-  - [x] Binary package name: `reportingin-cli` ✓
+  - [x] Source package name: `statshed-cli` ✓
+  - [x] Binary package name: `statshed-cli` ✓
   - [x] Maintainer info ✓
   - [x] Build-Depends: debhelper-compat, dh-python, python3-all, python3-hatchling, pybuild-plugin-pyproject ✓
   - [x] Depends: `${python3:Depends}, ${misc:Depends}, python3-click, python3-requests, python3-yaml` ✓
@@ -232,8 +232,8 @@ a `uv.lock` file committed to the repository. The lockfile already exists.
 
 ### 4.2 Debian Build Scripts
 
-- [x] Create `debian/reportingin-cli.manpages` to install man pages ✓
-- [x] Create `debian/reportingin-cli.docs` for README, etc. ✓
+- [x] Create `debian/statshed-cli.manpages` to install man pages ✓
+- [x] Create `debian/statshed-cli.docs` for README, etc. ✓
 
 ### 4.3 Python-Specific Debian Configuration
 
@@ -249,11 +249,11 @@ a `uv.lock` file committed to the repository. The lockfile already exists.
 - [ ] Install build dependencies:
   - [ ] `devscripts`, `debhelper`, `dh-python`, `python3-all`, `lintian`
 - [ ] Build binary package: `DEB_BUILD_OPTIONS=nocheck dpkg-buildpackage -us -uc -b`
-- [ ] Run lintian: `lintian ../reportingin-cli_*.deb`
+- [ ] Run lintian: `lintian ../statshed-cli_*.deb`
 - [ ] Fix all lintian errors (E:)
 - [ ] Fix lintian warnings (W:) where reasonable
-- [ ] Test installation: `sudo dpkg -i ../reportingin-cli_*.deb`
-- [ ] Test removal: `sudo dpkg -r reportingin-cli`
+- [ ] Test installation: `sudo dpkg -i ../statshed-cli_*.deb`
+- [ ] Test removal: `sudo dpkg -r statshed-cli`
 - [ ] Verify clean removal (no orphaned files)
 
 ### 4.5 Autopkgtest (Debian CI Testing)
@@ -268,11 +268,11 @@ a `uv.lock` file committed to the repository. The lockfile already exists.
   ```sh
   #!/bin/sh
   set -e
-  reportingin --help
-  reportingin --version
-  reportingin health --help
-  reportingin submit --help
-  reportingin completion --help
+  statshed --help
+  statshed --version
+  statshed health --help
+  statshed submit --help
+  statshed completion --help
   ```
 - [x] **Make smoke-test executable**: `chmod +x debian/tests/smoke-test` ✓
 - [ ] Run autopkgtest locally
@@ -308,7 +308,7 @@ a `uv.lock` file committed to the repository. The lockfile already exists.
 
 **IMPORTANT:** Man pages must be created during Phase 2.5 (before the first PyPI release).
 
-- [x] Create `docs/reportingin.1` (troff format): ✓
+- [x] Create `docs/statshed.1` (troff format): ✓
   - [x] NAME section ✓
   - [x] SYNOPSIS section ✓
   - [x] DESCRIPTION section ✓
@@ -316,12 +316,12 @@ a `uv.lock` file committed to the repository. The lockfile already exists.
   - [x] COMMANDS section (submit, health, groups, jobs, config, etc.) ✓
   - [x] EXIT STATUS section ✓
   - [x] FILES section (config file locations) ✓
-  - [x] ENVIRONMENT section (REPORTINGIN_URL, REPORTINGIN_CONFIG, NO_COLOR) ✓
+  - [x] ENVIRONMENT section (STATSHED_URL, STATSHED_CONFIG, NO_COLOR) ✓
   - [x] EXAMPLES section ✓
   - [x] SEE ALSO section ✓
   - [x] AUTHOR section ✓
-- [x] Test man page rendering: `man ./docs/reportingin.1` ✓
-- [x] Include man page in Debian package via `debian/reportingin-cli.manpages` ✓
+- [x] Test man page rendering: `man ./docs/statshed.1` ✓
+- [x] Include man page in Debian package via `debian/statshed-cli.manpages` ✓
 
 ---
 
@@ -331,7 +331,7 @@ a `uv.lock` file committed to the repository. The lockfile already exists.
 
 - [ ] Test installation from TestPyPI:
   ```bash
-  pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ reportingin-cli
+  pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ statshed-cli
   ```
 - [ ] Test Debian package installation in Docker
 - [ ] Verify all commands work: submit, health, groups, jobs, config, group-config, completion
@@ -353,7 +353,7 @@ a `uv.lock` file committed to the repository. The lockfile already exists.
 - [ ] Monitor workflow runs
 - [ ] Verify PyPI shows new version
 - [ ] Verify Debian packages in release assets
-- [ ] Test installation from PyPI: `pip install reportingin-cli`
+- [ ] Test installation from PyPI: `pip install statshed-cli`
 
 ---
 
@@ -372,8 +372,8 @@ Recommended implementation order to minimize rework:
 6. [x] Add badges to README ✓
 
 ### Phase 2.5: Man Pages (before first release)
-7. [x] Create `docs/reportingin.1` man page ✓
-8. [x] Test man page rendering: `man ./docs/reportingin.1` ✓
+7. [x] Create `docs/statshed.1` man page ✓
+8. [x] Test man page rendering: `man ./docs/statshed.1` ✓
    - **IMPORTANT:** Man pages MUST be created before Phase 3 (first PyPI release)
 
 ### Phase 3: PyPI Publishing
@@ -438,17 +438,17 @@ jobs:
           UV_PYTHON: ${{ matrix.python-version }}
 
       - name: Run type checking
-        run: uv run mypy reportingin_cli
+        run: uv run mypy statshed_cli
         env:
           UV_PYTHON: ${{ matrix.python-version }}
 
       - name: Run linting
-        run: uv run ruff check reportingin_cli tests
+        run: uv run ruff check statshed_cli tests
         env:
           UV_PYTHON: ${{ matrix.python-version }}
 
       - name: Check formatting
-        run: uv run ruff format --check reportingin_cli tests
+        run: uv run ruff format --check statshed_cli tests
         env:
           UV_PYTHON: ${{ matrix.python-version }}
 ```
@@ -639,7 +639,7 @@ jobs:
 
 ```
 # debian/control
-Source: reportingin-cli
+Source: statshed-cli
 Section: utils
 Priority: optional
 Maintainer: Sean <sean@example.com>
@@ -649,12 +649,12 @@ Build-Depends: debhelper-compat (= 13),
                python3-hatchling,
                pybuild-plugin-pyproject
 Standards-Version: 4.6.2
-Homepage: https://github.com/reportingin/reportingin-cli
-Vcs-Git: https://github.com/reportingin/reportingin-cli.git
-Vcs-Browser: https://github.com/reportingin/reportingin-cli
+Homepage: https://github.com/statshed/statshed-cli
+Vcs-Git: https://github.com/statshed/statshed-cli.git
+Vcs-Browser: https://github.com/statshed/statshed-cli
 Rules-Requires-Root: no
 
-Package: reportingin-cli
+Package: statshed-cli
 Architecture: all
 Depends: ${python3:Depends},
          ${misc:Depends},
@@ -662,8 +662,8 @@ Depends: ${python3:Depends},
          python3-requests,
          python3-yaml
 Suggests: python3-rich
-Description: Command-line interface for Reporting In status dashboard
- Reporting In CLI provides commands for interacting with the Reporting In status
+Description: Command-line interface for StatShed status dashboard
+ StatShed CLI provides commands for interacting with the StatShed status
  dashboard from the command line:
  .
   - submit: Report job status (success, error, progress)
@@ -682,7 +682,7 @@ Description: Command-line interface for Reporting In status dashboard
 After implementation, the repository should have:
 
 ```
-reportingin-cli/
+statshed-cli/
 ├── .github/
 │   └── workflows/
 │       ├── test.yml
@@ -698,15 +698,15 @@ reportingin-cli/
 │   ├── tests/
 │   │   ├── control
 │   │   └── smoke-test
-│   ├── reportingin-cli.manpages
-│   └── reportingin-cli.docs
+│   ├── statshed-cli.manpages
+│   └── statshed-cli.docs
 ├── docs/
-│   ├── reportingin.1
+│   ├── statshed.1
 │   └── releasing.md
 ├── scripts/
 │   ├── build-deb.sh
 │   └── test-package.sh
-├── reportingin_cli/
+├── statshed_cli/
 │   └── (existing source)
 ├── tests/
 │   └── (existing tests)

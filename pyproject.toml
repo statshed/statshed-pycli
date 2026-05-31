@@ -1,14 +1,14 @@
 [project]
-name = "reportingin-cli"
+name = "statshed-cli"
 version = "1.0.1"
-description = "Command-line interface for Reporting In status dashboard"
+description = "Command-line interface for StatShed status dashboard"
 readme = "README.md"
 license = {file = "LICENSE"}
 requires-python = ">=3.10"
 authors = [
     { name = "Sean" }
 ]
-keywords = ["reportingin", "dashboard", "cli", "status", "monitoring"]
+keywords = ["statshed", "dashboard", "cli", "status", "monitoring"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Environment :: Console",
@@ -44,14 +44,14 @@ dev = [
 ]
 
 [project.scripts]
-reportingin = "reportingin_cli.main:cli"
+statshed = "statshed_cli.main:cli"
 
 [project.urls]
-Homepage = "https://github.com/reportingin/reportingin-cli"
-Documentation = "https://github.com/reportingin/reportingin-cli#readme"
-Repository = "https://github.com/reportingin/reportingin-cli.git"
-"Bug Tracker" = "https://github.com/reportingin/reportingin-cli/issues"
-Changelog = "https://github.com/reportingin/reportingin-cli/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/statshed/statshed-cli"
+Documentation = "https://github.com/statshed/statshed-cli#readme"
+Repository = "https://github.com/statshed/statshed-cli.git"
+"Bug Tracker" = "https://github.com/statshed/statshed-cli/issues"
+Changelog = "https://github.com/statshed/statshed-cli/blob/main/CHANGELOG.md"
 
 [build-system]
 requires = ["hatchling"]
@@ -60,7 +60,7 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.sdist]
 include = [
     "pyproject.toml",
-    "reportingin_cli/",
+    "statshed_cli/",
     "tests/",
     "docs/*.1",
     "LICENSE",

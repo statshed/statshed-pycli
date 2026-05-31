@@ -25,7 +25,7 @@ import sys
 from types import FrameType
 from typing import IO
 
-from reportingin_cli.stream import StreamProcessor
+from statshed_cli.stream import StreamProcessor
 
 
 # AIDEV-NOTE: Shell convention for signal-terminated processes: exit code

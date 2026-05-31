@@ -1,7 +1,7 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: reportingin-cli
+Upstream-Name: statshed-cli
 Upstream-Contact: Sean <sean@realgo.com>
-Source: https://github.com/reportingin/reportingin-cli
+Source: https://github.com/statshed/statshed-cli
 
 Files: *
 Copyright: Sean

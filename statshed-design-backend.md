@@ -1,6 +1,6 @@
-# Reporting In Backend Design Document
+# StatShed Backend Design Document
 
-A Flask-based backend providing REST API and WebSocket services for the Reporting In status dashboard.
+A Flask-based backend providing REST API and WebSocket services for the StatShed status dashboard.
 
 ## Overview
 
@@ -238,7 +238,7 @@ Group-specific overrides take precedence over global settings.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `DATABASE_URL` | `sqlite:///reportingin.db` | SQLAlchemy database connection URL |
+| `DATABASE_URL` | `sqlite:///statshed.db` | SQLAlchemy database connection URL |
 | `SECRET_KEY` | (generated) | Flask secret key for sessions |
 | `DEBUG` | `false` | Enable Flask debug mode |
 | `HOST` | `127.0.0.1` | Server bind address |

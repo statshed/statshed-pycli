@@ -1,6 +1,6 @@
-# Releasing Reporting In CLI
+# Releasing StatShed CLI
 
-This document describes the release process for reportingin-cli, including version management, changelog updates, and publishing to PyPI and Debian packages.
+This document describes the release process for statshed-cli, including version management, changelog updates, and publishing to PyPI and Debian packages.
 
 ## Prerequisites
 
@@ -8,11 +8,11 @@ Before releasing, ensure you have:
 - Push access to the GitHub repository
 - Trusted publishing configured on PyPI (see deploy-todo.md Part 1.4)
 - All tests passing locally: `uv run pytest`
-- All linting passing: `uv run ruff check reportingin_cli tests`
+- All linting passing: `uv run ruff check statshed_cli tests`
 
 ## Version Management
 
-Reporting In CLI uses **Semantic Versioning** (SemVer):
+StatShed CLI uses **Semantic Versioning** (SemVer):
 - **MAJOR** (X.0.0): Breaking changes to CLI interface or configuration
 - **MINOR** (0.X.0): New features, new commands, backward-compatible changes
 - **PATCH** (0.0.X): Bug fixes, documentation updates
@@ -26,7 +26,7 @@ The version must be updated in **two places** to stay synchronized:
    version = "X.Y.Z"
    ```
 
-2. **reportingin_cli/__init__.py** - Used by `--version` flag:
+2. **statshed_cli/__init__.py** - Used by `--version` flag:
    ```python
    __version__ = "X.Y.Z"
    ```
@@ -47,7 +47,7 @@ The version must be updated in **two places** to stay synchronized:
 ```bash
 # Edit both files to update version
 # pyproject.toml: version = "X.Y.Z"
-# reportingin_cli/__init__.py: __version__ = "X.Y.Z"
+# statshed_cli/__init__.py: __version__ = "X.Y.Z"
 ```
 
 ### Step 2: Update Changelog
@@ -75,7 +75,7 @@ dch -r ""  # Mark as released (changes UNRELEASED to distro name)
 
 Or manually edit `debian/changelog` with proper format:
 ```
-reportingin-cli (X.Y.Z-1) unstable; urgency=medium
+statshed-cli (X.Y.Z-1) unstable; urgency=medium
 
   * New upstream release.
   * [List specific changes relevant to Debian packaging]
@@ -90,10 +90,10 @@ reportingin-cli (X.Y.Z-1) unstable; urgency=medium
 uv run pytest
 
 # Run linting
-uv run ruff check reportingin_cli tests
+uv run ruff check statshed_cli tests
 
 # Run type checking
-uv run mypy reportingin_cli
+uv run mypy statshed_cli
 
 # Test package installation
 ./scripts/test-package.sh
@@ -102,7 +102,7 @@ uv run mypy reportingin_cli
 ### Step 5: Commit Release Changes
 
 ```bash
-git add pyproject.toml reportingin_cli/__init__.py CHANGELOG.md debian/changelog
+git add pyproject.toml statshed_cli/__init__.py CHANGELOG.md debian/changelog
 git commit -m "Release v${VERSION}"
 ```
 
@@ -136,30 +136,30 @@ This triggers the automated workflows:
 
 ```bash
 # Wait a few minutes for PyPI to process
-pip install --upgrade reportingin-cli
+pip install --upgrade statshed-cli
 
 # Verify installation
-reportingin --version  # Should show new version
+statshed --version  # Should show new version
 ```
 
 #### GitHub Release Assets
 
 Check that the following artifacts are attached to the release:
-- `reportingin_cli-X.Y.Z.tar.gz` (source distribution)
-- `reportingin_cli-X.Y.Z-py3-none-any.whl` (wheel)
-- `reportingin-cli_X.Y.Z-1_all.deb` (Ubuntu Noble package)
-- `reportingin-cli_X.Y.Z-1_all.deb` (Debian Trixie package)
+- `statshed_cli-X.Y.Z.tar.gz` (source distribution)
+- `statshed_cli-X.Y.Z-py3-none-any.whl` (wheel)
+- `statshed-cli_X.Y.Z-1_all.deb` (Ubuntu Noble package)
+- `statshed-cli_X.Y.Z-1_all.deb` (Debian Trixie package)
 
 #### Debian Package
 
 ```bash
 # Download and install .deb
-wget https://github.com/OWNER/REPO/releases/download/vX.Y.Z/reportingin-cli_X.Y.Z-1_all.deb
-sudo dpkg -i reportingin-cli_X.Y.Z-1_all.deb
+wget https://github.com/OWNER/REPO/releases/download/vX.Y.Z/statshed-cli_X.Y.Z-1_all.deb
+sudo dpkg -i statshed-cli_X.Y.Z-1_all.deb
 sudo apt-get install -f  # Install any missing dependencies
 
 # Verify
-reportingin --version
+statshed --version
 ```
 
 ## Release Candidate Process
@@ -169,7 +169,7 @@ For major releases, consider creating release candidates first:
 ```bash
 # Update version to RC
 # pyproject.toml: version = "2.0.0rc1"
-# reportingin_cli/__init__.py: __version__ = "2.0.0rc1"
+# statshed_cli/__init__.py: __version__ = "2.0.0rc1"
 
 # Commit and tag
 git commit -am "Release v2.0.0-rc1"
@@ -239,20 +239,20 @@ git reset --hard HEAD~1
 ```bash
 # Clear pip cache and reinstall
 pip cache purge
-pip install --no-cache-dir reportingin-cli
+pip install --no-cache-dir statshed-cli
 
 # Install with verbose output for debugging
-pip install -v reportingin-cli
+pip install -v statshed-cli
 ```
 
 ### Debian Package Issues
 
 ```bash
 # Check package info
-dpkg-deb -I reportingin-cli_*.deb
+dpkg-deb -I statshed-cli_*.deb
 
 # Check package contents
-dpkg-deb -c reportingin-cli_*.deb
+dpkg-deb -c statshed-cli_*.deb
 
 # Check for dependency issues
 sudo apt-get install -f

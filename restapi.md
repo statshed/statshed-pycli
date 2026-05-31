@@ -1,6 +1,6 @@
-# Reporting In REST API Reference
+# StatShed REST API Reference
 
-Reporting In is a status dashboard application for tracking job statuses across groups. This document describes the REST API provided by the Reporting In backend server.
+StatShed is a status dashboard application for tracking job statuses across groups. This document describes the REST API provided by the StatShed backend server.
 
 ## Base URL
 
@@ -341,7 +341,7 @@ The server uses Socket.IO for real-time updates. Connect to the same host/port.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `DATABASE_URL` | `sqlite:///reportingin.db` | SQLAlchemy database connection URL |
+| `DATABASE_URL` | `sqlite:///statshed.db` | SQLAlchemy database connection URL |
 | `SECRET_KEY` | (dev key) | Flask secret key for sessions |
 | `DEBUG` | `false` | Enable Flask debug mode |
 | `HOST` | `127.0.0.1` | Server bind address |
@@ -351,33 +351,33 @@ The server uses Socket.IO for real-time updates. Connect to the same host/port.
 
 ## CLI Client
 
-The `reportingin` command-line tool provides convenient access to this API:
+The `statshed` command-line tool provides convenient access to this API:
 
 ```bash
 # Submit a status
-reportingin submit --group nightly-builds --job backend-tests --status success --message "All tests passed"
+statshed submit --group nightly-builds --job backend-tests --status success --message "All tests passed"
 
 # Check health
-reportingin health
+statshed health
 
 # List groups
-reportingin groups
+statshed groups
 
 # Get group jobs
-reportingin jobs nightly-builds
+statshed jobs nightly-builds
 
 # Get or update global configuration
-reportingin config                          # View current config
-reportingin config --progress-timeout 10    # Update progress timeout
-reportingin config --staleness-timeout 48   # Update staleness timeout
+statshed config                          # View current config
+statshed config --progress-timeout 10    # Update progress timeout
+statshed config --staleness-timeout 48   # Update staleness timeout
 
 # Use JSON output
-reportingin health --json
-reportingin groups --json
-reportingin jobs nightly-builds --json
+statshed health --json
+statshed groups --json
+statshed jobs nightly-builds --json
 
 # Connect to a different server
-reportingin --url http://myserver:7828 health
+statshed --url http://myserver:7828 health
 ```
 
-See `reportingin --help` for full usage information.
+See `statshed --help` for full usage information.

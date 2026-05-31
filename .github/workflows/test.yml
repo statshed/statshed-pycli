@@ -42,16 +42,16 @@ jobs:
           UV_PYTHON: ${{ matrix.python-version }}
 
       - name: Run type checking
-        run: uv run mypy reportingin_cli
+        run: uv run mypy statshed_cli
         env:
           UV_PYTHON: ${{ matrix.python-version }}
 
       - name: Run linting
-        run: uv run ruff check reportingin_cli tests
+        run: uv run ruff check statshed_cli tests
         env:
           UV_PYTHON: ${{ matrix.python-version }}
 
       - name: Check formatting
-        run: uv run ruff format --check reportingin_cli tests
+        run: uv run ruff format --check statshed_cli tests
         env:
           UV_PYTHON: ${{ matrix.python-version }}

@@ -1,4 +1,4 @@
-"""Logging utilities for Reporting In CLI.
+"""Logging utilities for StatShed CLI.
 
 AIDEV-NOTE: This module provides syslog integration for error logging.
 Syslog is used when submit.syslog is enabled in config, primarily for
@@ -9,7 +9,7 @@ import syslog
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from reportingin_cli.config import SubmitConfig
+    from statshed_cli.config import SubmitConfig
 
 # Mapping of facility names to syslog constants
 # AIDEV-NOTE: These are standard syslog facilities. Most users will use "user"
@@ -38,7 +38,7 @@ def log_to_syslog(message: str, facility: str = "user") -> None:
     facility_code = SYSLOG_FACILITIES.get(facility, syslog.LOG_USER)
 
     # Open syslog with the program name
-    syslog.openlog(ident="reportingin", logoption=syslog.LOG_PID, facility=facility_code)
+    syslog.openlog(ident="statshed", logoption=syslog.LOG_PID, facility=facility_code)
     try:
         syslog.syslog(syslog.LOG_WARNING, message)
     finally:

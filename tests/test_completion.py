@@ -7,7 +7,7 @@ import click
 import pytest
 import responses
 
-from reportingin_cli.completion import (
+from statshed_cli.completion import (
     complete_group_names,
     complete_job_names,
     complete_status_values,
@@ -21,13 +21,13 @@ class TestGetCompletionScript:
     def test_bash_completion(self) -> None:
         """Test Bash completion script generation."""
         script = get_completion_script("bash")
-        assert "bash" in script.lower() or "_reportingin" in script
+        assert "bash" in script.lower() or "_statshed" in script
         assert "complete" in script
 
     def test_zsh_completion(self) -> None:
         """Test Zsh completion script generation."""
         script = get_completion_script("zsh")
-        assert "#compdef" in script or "_reportingin" in script
+        assert "#compdef" in script or "_statshed" in script
 
     def test_fish_completion(self) -> None:
         """Test Fish completion script generation."""
@@ -127,7 +127,7 @@ class TestCompleteGroupNames:
 
     @responses.activate
     def test_uses_env_url(self) -> None:
-        """Test that REPORTINGIN_URL environment variable is used."""
+        """Test that STATSHED_URL environment variable is used."""
         responses.add(
             responses.GET,
             "http://custom.example.com/groups",
@@ -138,13 +138,13 @@ class TestCompleteGroupNames:
         ctx = MagicMock(spec=click.Context)
         param = MagicMock(spec=click.Parameter)
 
-        os.environ["REPORTINGIN_URL"] = "http://custom.example.com"
+        os.environ["STATSHED_URL"] = "http://custom.example.com"
         try:
             completions = complete_group_names(ctx, param, "")
             names = [c.value for c in completions]
             assert "test-group" in names
         finally:
-            os.environ.pop("REPORTINGIN_URL", None)
+            os.environ.pop("STATSHED_URL", None)
 
 
 class TestCompleteJobNames:

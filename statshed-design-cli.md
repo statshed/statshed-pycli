@@ -1,10 +1,10 @@
-# Reporting In CLI - Design Document
+# StatShed CLI - Design Document
 
-A command-line interface for interacting with the Reporting In status dashboard API.
+A command-line interface for interacting with the StatShed status dashboard API.
 
 ## Overview
 
-The Reporting In CLI (`reportingin`) provides a robust command-line interface for submitting job statuses and querying the Reporting In dashboard. It is designed to work equally well in interactive terminal sessions, CI/CD pipelines, cron jobs, and shell scripts.
+The StatShed CLI (`statshed`) provides a robust command-line interface for submitting job statuses and querying the StatShed dashboard. It is designed to work equally well in interactive terminal sessions, CI/CD pipelines, cron jobs, and shell scripts.
 
 ## Technology Stack
 
@@ -22,7 +22,7 @@ The Reporting In CLI (`reportingin`) provides a robust command-line interface fo
 
 ```
 cli/
-├── reportingin_cli/
+├── statshed_cli/
 │   ├── __init__.py
 │   ├── main.py              # CLI entry point and commands
 │   ├── client.py            # API client
@@ -46,8 +46,8 @@ cli/
 
 | Option | Short | Environment Variable | Description |
 |--------|-------|---------------------|-------------|
-| `--url` | `-u` | `REPORTINGIN_URL` | Reporting In API URL (default: from config or `http://localhost:7828`) |
-| `--config` | `-c` | `REPORTINGIN_CONFIG` | Path to config file |
+| `--url` | `-u` | `STATSHED_URL` | StatShed API URL (default: from config or `http://localhost:7828`) |
+| `--config` | `-c` | `STATSHED_CONFIG` | Path to config file |
 | `--quiet` | `-q` | - | Suppress non-error output |
 | `--no-color` | - | `NO_COLOR` | Disable colored output |
 | `--json` | - | - | Output in JSON format (where applicable) |
@@ -57,7 +57,7 @@ cli/
 #### `submit` - Submit Job Status
 
 ```bash
-reportingin submit --group <name> --job <name> --status <status> [--message <msg>]
+statshed submit --group <name> --job <name> --status <status> [--message <msg>]
 ```
 
 | Option | Short | Required | Description |
@@ -76,7 +76,7 @@ reportingin submit --group <name> --job <name> --status <status> [--message <msg
 #### `health` - System Health Summary
 
 ```bash
-reportingin health [--json]
+statshed health [--json]
 ```
 
 Returns overall system health status. Exits with code 1 if unhealthy.
@@ -84,7 +84,7 @@ Returns overall system health status. Exits with code 1 if unhealthy.
 #### `groups` - List Groups
 
 ```bash
-reportingin groups [--json]
+statshed groups [--json]
 ```
 
 Lists all groups with health summaries.
@@ -92,7 +92,7 @@ Lists all groups with health summaries.
 #### `jobs` - List Jobs in Group
 
 ```bash
-reportingin jobs <group_name> [--json]
+statshed jobs <group_name> [--json]
 ```
 
 Lists all jobs within a specific group.
@@ -101,10 +101,10 @@ Lists all jobs within a specific group.
 
 ```bash
 # View global config
-reportingin config
+statshed config
 
 # Update global config
-reportingin config --progress-timeout <minutes> --staleness-timeout <hours>
+statshed config --progress-timeout <minutes> --staleness-timeout <hours>
 ```
 
 | Option | Short | Description |
@@ -117,13 +117,13 @@ reportingin config --progress-timeout <minutes> --staleness-timeout <hours>
 
 ```bash
 # View group config
-reportingin group-config <group_name>
+statshed group-config <group_name>
 
 # Update group config
-reportingin group-config <group_name> --progress-timeout <minutes>
+statshed group-config <group_name> --progress-timeout <minutes>
 
 # Reset to global defaults
-reportingin group-config <group_name> --reset-progress-timeout --reset-staleness-timeout
+statshed group-config <group_name> --reset-progress-timeout --reset-staleness-timeout
 ```
 
 | Option | Short | Description |
@@ -138,24 +138,24 @@ reportingin group-config <group_name> --reset-progress-timeout --reset-staleness
 
 ```bash
 # Generate completion script
-reportingin completion bash > ~/.local/share/bash-completion/completions/reportingin
-reportingin completion zsh > ~/.zfunc/_reportingin
-reportingin completion fish > ~/.config/fish/completions/reportingin.fish
+statshed completion bash > ~/.local/share/bash-completion/completions/statshed
+statshed completion zsh > ~/.zfunc/_statshed
+statshed completion fish > ~/.config/fish/completions/statshed.fish
 ```
 
 ## Configuration File
 
 The CLI reads configuration from the following locations (in order of precedence):
 
-1. Path specified via `--config` or `REPORTINGIN_CONFIG`
-2. `./reportingin.yaml` (current directory)
-3. `~/.config/reportingin/reportingin.yaml`
-4. `/etc/reportingin/reportingin.yaml`
+1. Path specified via `--config` or `STATSHED_CONFIG`
+2. `./statshed.yaml` (current directory)
+3. `~/.config/statshed/statshed.yaml`
+4. `/etc/statshed/statshed.yaml`
 
 ### Configuration Schema
 
 ```yaml
-# Reporting In CLI Configuration
+# StatShed CLI Configuration
 
 # API server URL
 url: http://localhost:7828
@@ -202,7 +202,7 @@ timeout: 10
 ### Plain Mode (default when Rich not installed or `--no-color`)
 
 ```
-$ reportingin health
+$ statshed health
 System Health: ✅ HEALTHY
 Total Jobs: 10
   Healthy: 8
@@ -249,7 +249,7 @@ Refactor the existing CLI to support the new architecture and add configuration 
 - [X] Implement config file discovery (check paths in order of precedence)
 - [X] Implement YAML config file parser with schema validation
 - [X] Add `--config` global option to specify config file path
-- [X] Support `REPORTINGIN_CONFIG` environment variable
+- [X] Support `STATSHED_CONFIG` environment variable
 - [X] Merge config sources: defaults < config file < env vars < CLI args
 - [X] Add helpful error messages for invalid config files
 
@@ -300,7 +300,7 @@ Enhance user experience with optional rich terminal output and shell completion.
 
 #### Rich Terminal Output
 
-- [X] Add Rich as optional dependency (`pip install reportingin-cli[rich]`)
+- [X] Add Rich as optional dependency (`pip install statshed-cli[rich]`)
 - [X] Create `output.py` module with output abstraction
 - [X] Implement `PlainFormatter` class for basic output
 - [X] Implement `RichFormatter` class for styled output
@@ -393,7 +393,7 @@ jobs:
     steps:
       - name: Report build start
         run: |
-          reportingin submit -g ci-builds -j "${{ github.repository }}" \
+          statshed submit -g ci-builds -j "${{ github.repository }}" \
             -s progress -m "Build started: ${{ github.sha }}"
 
       - name: Build
@@ -402,13 +402,13 @@ jobs:
       - name: Report build success
         if: success()
         run: |
-          reportingin submit -g ci-builds -j "${{ github.repository }}" \
+          statshed submit -g ci-builds -j "${{ github.repository }}" \
             -s success -m "Build passed: ${{ github.sha }}"
 
       - name: Report build failure
         if: failure()
         run: |
-          reportingin submit -g ci-builds -j "${{ github.repository }}" \
+          statshed submit -g ci-builds -j "${{ github.repository }}" \
             -s error -m "Build failed: ${{ github.sha }}"
 ```
 
@@ -419,13 +419,13 @@ jobs:
 set -eu
 
 # Submit commands won't cause script to exit on API errors
-reportingin submit -g backups -j database -s progress -m "Starting backup"
+statshed submit -g backups -j database -s progress -m "Starting backup"
 
 # Do the actual backup
 pg_dump mydb > /backups/mydb.sql
 
 # Report success
-reportingin submit -g backups -j database -s success -m "Backup completed"
+statshed submit -g backups -j database -s success -m "Backup completed"
 ```
 
 ### Cron Job with Strict Error Handling
@@ -434,7 +434,7 @@ reportingin submit -g backups -j database -s success -m "Backup completed"
 #!/bin/bash
 # No set -eu, handle errors manually
 
-if ! reportingin submit --strict -g backups -j database -s progress; then
+if ! statshed submit --strict -g backups -j database -s progress; then
     echo "Warning: Could not report status to dashboard"
 fi
 
@@ -442,9 +442,9 @@ pg_dump mydb > /backups/mydb.sql
 backup_status=$?
 
 if [ $backup_status -eq 0 ]; then
-    reportingin submit -g backups -j database -s success
+    statshed submit -g backups -j database -s success
 else
-    reportingin submit -g backups -j database -s error -m "Backup failed with code $backup_status"
+    statshed submit -g backups -j database -s error -m "Backup failed with code $backup_status"
 fi
 ```
 
@@ -452,26 +452,26 @@ fi
 
 ```bash
 # Check overall health with rich output
-$ reportingin health
+$ statshed health
 
 # List groups with status summary
-$ reportingin groups
+$ statshed groups
 
 # Drill into a specific group
-$ reportingin jobs nightly-builds
+$ statshed jobs nightly-builds
 
 # Check group-specific timeout configuration
-$ reportingin group-config nightly-builds
+$ statshed group-config nightly-builds
 
 # Update group timeout (builds can take longer)
-$ reportingin group-config nightly-builds --progress-timeout 30
+$ statshed group-config nightly-builds --progress-timeout 30
 ```
 
 ### Configuration File Example
 
 ```yaml
-# ~/.config/reportingin/reportingin.yaml
-url: https://reportingin.internal.example.com
+# ~/.config/statshed/statshed.yaml
+url: https://statshed.internal.example.com
 color: auto
 timeout: 30
 

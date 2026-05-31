@@ -2,8 +2,8 @@
 
 from unittest import mock
 
-from reportingin_cli.config import SubmitConfig
-from reportingin_cli.logging import SYSLOG_FACILITIES, log_submit_error, log_to_syslog
+from statshed_cli.config import SubmitConfig
+from statshed_cli.logging import SYSLOG_FACILITIES, log_submit_error, log_to_syslog
 
 
 class TestSyslogFacilities:
@@ -32,7 +32,7 @@ class TestSyslogFacilities:
 class TestLogToSyslog:
     """Test log_to_syslog function."""
 
-    @mock.patch("reportingin_cli.logging.syslog")
+    @mock.patch("statshed_cli.logging.syslog")
     def test_log_message(self, mock_syslog: mock.Mock) -> None:
         """Test logging a message to syslog."""
         log_to_syslog("Test message", "user")
@@ -45,7 +45,7 @@ class TestLogToSyslog:
         call_args = mock_syslog.syslog.call_args
         assert "Test message" in call_args[0]
 
-    @mock.patch("reportingin_cli.logging.syslog")
+    @mock.patch("statshed_cli.logging.syslog")
     def test_log_with_facility(self, mock_syslog: mock.Mock) -> None:
         """Test logging with specific facility."""
         mock_syslog.LOG_LOCAL0 = 128
@@ -55,7 +55,7 @@ class TestLogToSyslog:
         call_args = mock_syslog.openlog.call_args
         assert call_args[1]["facility"] == 128
 
-    @mock.patch("reportingin_cli.logging.syslog")
+    @mock.patch("statshed_cli.logging.syslog")
     def test_log_unknown_facility_defaults_to_user(self, mock_syslog: mock.Mock) -> None:
         """Test that unknown facility defaults to LOG_USER."""
         mock_syslog.LOG_USER = 8
@@ -68,7 +68,7 @@ class TestLogToSyslog:
 class TestLogSubmitError:
     """Test log_submit_error function."""
 
-    @mock.patch("reportingin_cli.logging.log_to_syslog")
+    @mock.patch("statshed_cli.logging.log_to_syslog")
     def test_logs_when_syslog_enabled(self, mock_log: mock.Mock) -> None:
         """Test that errors are logged when syslog is enabled."""
         config = SubmitConfig(syslog=True, syslog_facility="local0")
@@ -78,7 +78,7 @@ class TestLogSubmitError:
 
         mock_log.assert_called_once_with("Test error", "local0")
 
-    @mock.patch("reportingin_cli.logging.log_to_syslog")
+    @mock.patch("statshed_cli.logging.log_to_syslog")
     def test_no_log_when_syslog_disabled(self, mock_log: mock.Mock) -> None:
         """Test that errors are not logged when syslog is disabled."""
         config = SubmitConfig(syslog=False)

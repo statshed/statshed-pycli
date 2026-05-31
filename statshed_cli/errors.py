@@ -1,4 +1,4 @@
-"""Error handling and exit codes for Reporting In CLI.
+"""Error handling and exit codes for StatShed CLI.
 
 AIDEV-NOTE: Exit codes follow a specific scheme:
 - 0: Success
@@ -28,8 +28,8 @@ class ExitCode(IntEnum):
     ERROR_NOT_FOUND = 11  # Resource not found (group, job)
 
 
-class ReportingInError(Exception):
-    """Base exception for Reporting In CLI errors."""
+class StatShedError(Exception):
+    """Base exception for StatShed CLI errors."""
 
     exit_code: ExitCode = ExitCode.ERROR_API
 
@@ -39,25 +39,25 @@ class ReportingInError(Exception):
             self.exit_code = exit_code
 
 
-class ConfigError(ReportingInError):
+class ConfigError(StatShedError):
     """Configuration file error."""
 
     exit_code = ExitCode.ERROR_CONFIG
 
 
-class ConnectionError(ReportingInError):
+class ConnectionError(StatShedError):
     """Could not connect to the server."""
 
     exit_code = ExitCode.ERROR_CONNECTION
 
 
-class TimeoutError(ReportingInError):
+class TimeoutError(StatShedError):
     """Request timed out."""
 
     exit_code = ExitCode.ERROR_TIMEOUT
 
 
-class ApiError(ReportingInError):
+class ApiError(StatShedError):
     """API returned an error response."""
 
     exit_code = ExitCode.ERROR_API
@@ -69,13 +69,13 @@ class ApiError(ReportingInError):
         self.status_code = status_code
 
 
-class NotFoundError(ReportingInError):
+class NotFoundError(StatShedError):
     """Resource not found."""
 
     exit_code = ExitCode.ERROR_NOT_FOUND
 
 
-class InvalidArgsError(ReportingInError):
+class InvalidArgsError(StatShedError):
     """Invalid command arguments."""
 
     exit_code = ExitCode.ERROR_INVALID_ARGS
@@ -83,6 +83,6 @@ class InvalidArgsError(ReportingInError):
 
 def get_exit_code(error: Exception) -> int:
     """Map an exception to an exit code."""
-    if isinstance(error, ReportingInError):
+    if isinstance(error, StatShedError):
         return error.exit_code
     return ExitCode.ERROR_API

@@ -1,4 +1,4 @@
-"""Configuration file handling for Reporting In CLI.
+"""Configuration file handling for StatShed CLI.
 
 AIDEV-NOTE: Configuration precedence (lowest to highest):
 1. Built-in defaults
@@ -14,7 +14,7 @@ from typing import Any
 
 import yaml
 
-from reportingin_cli.errors import ConfigError
+from statshed_cli.errors import ConfigError
 
 # Default configuration values
 DEFAULT_URL = "http://localhost:7828"
@@ -26,9 +26,9 @@ DEFAULT_RETRY_DELAY = 1.0
 
 # Configuration file search paths (in order of precedence)
 CONFIG_SEARCH_PATHS = [
-    Path("./reportingin.yaml"),
-    Path.home() / ".config" / "reportingin" / "reportingin.yaml",
-    Path("/etc/reportingin/reportingin.yaml"),
+    Path("./statshed.yaml"),
+    Path.home() / ".config" / "statshed" / "statshed.yaml",
+    Path("/etc/statshed/statshed.yaml"),
 ]
 
 
@@ -43,7 +43,7 @@ class SubmitConfig:
 
 @dataclass
 class Config:
-    """Reporting In CLI configuration.
+    """StatShed CLI configuration.
 
     AIDEV-NOTE: This dataclass holds all configuration values merged from
     various sources. The `from_sources()` classmethod handles the merging.
@@ -86,7 +86,7 @@ class Config:
             config.config_path = file_path
 
         # Apply environment variables
-        if env_url := os.environ.get("REPORTINGIN_URL"):
+        if env_url := os.environ.get("STATSHED_URL"):
             config.url = env_url
 
         # Apply CLI arguments (highest precedence)
@@ -106,7 +106,7 @@ def _find_config_file(explicit_path: str | None = None) -> Path | None:
     """Find the configuration file.
 
     Args:
-        explicit_path: Path specified via --config or REPORTINGIN_CONFIG
+        explicit_path: Path specified via --config or STATSHED_CONFIG
 
     Returns:
         Path to config file if found, None otherwise
@@ -122,7 +122,7 @@ def _find_config_file(explicit_path: str | None = None) -> Path | None:
         return path
 
     # Check environment variable
-    if env_config := os.environ.get("REPORTINGIN_CONFIG"):
+    if env_config := os.environ.get("STATSHED_CONFIG"):
         path = Path(env_config)
         if not path.exists():
             raise ConfigError(f"Configuration file not found: {env_config}")

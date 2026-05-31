@@ -1,4 +1,4 @@
-"""Shell completion utilities for Reporting In CLI.
+"""Shell completion utilities for StatShed CLI.
 
 AIDEV-NOTE: This module provides shell completion script generation and
 dynamic completions for group/job names. The dynamic completions query
@@ -16,17 +16,17 @@ if TYPE_CHECKING:
 
 
 # AIDEV-NOTE: Click provides built-in shell completion. These templates
-# extend the basic completion with Reporting In-specific enhancements.
+# extend the basic completion with StatShed-specific enhancements.
 
 BASH_COMPLETION_SCRIPT = """
-# Reporting In CLI Bash completion
-# Install: reportingin completion bash > ~/.local/share/bash-completion/completions/reportingin
+# StatShed CLI Bash completion
+# Install: statshed completion bash > ~/.local/share/bash-completion/completions/statshed
 
-_reportingin_completion() {
+_statshed_completion() {
     local IFS=$'\\n'
     local response
 
-    response=$(env COMP_WORDS="${COMP_WORDS[*]}" COMP_CWORD=$COMP_CWORD _REPORTINGIN_COMPLETE=bash_complete $1)
+    response=$(env COMP_WORDS="${COMP_WORDS[*]}" COMP_CWORD=$COMP_CWORD _STATSHED_COMPLETE=bash_complete $1)
 
     for completion in $response; do
         IFS=',' read type value <<< "$completion"
@@ -36,21 +36,21 @@ _reportingin_completion() {
     return 0
 }
 
-complete -o default -F _reportingin_completion reportingin
+complete -o default -F _statshed_completion statshed
 """
 
 ZSH_COMPLETION_SCRIPT = """
-#compdef reportingin
-# Reporting In CLI Zsh completion
-# Install: reportingin completion zsh > ~/.zfunc/_reportingin
+#compdef statshed
+# StatShed CLI Zsh completion
+# Install: statshed completion zsh > ~/.zfunc/_statshed
 
-_reportingin() {
+_statshed() {
     local -a completions
     local -a completions_with_descriptions
     local -a response
-    (( ! $+commands[reportingin] )) && return 1
+    (( ! $+commands[statshed] )) && return 1
 
-    response=("${(@f)$(env COMP_WORDS="${words[*]}" COMP_CWORD=$((CURRENT-1)) _REPORTINGIN_COMPLETE=zsh_complete reportingin)}")
+    response=("${(@f)$(env COMP_WORDS="${words[*]}" COMP_CWORD=$((CURRENT-1)) _STATSHED_COMPLETE=zsh_complete statshed)}")
 
     for key descr in ${(kv)response}; do
         if [[ "$descr" == "_" ]]; then
@@ -69,15 +69,15 @@ _reportingin() {
     fi
 }
 
-compdef _reportingin reportingin
+compdef _statshed statshed
 """
 
 FISH_COMPLETION_SCRIPT = """
-# Reporting In CLI Fish completion
-# Install: reportingin completion fish > ~/.config/fish/completions/reportingin.fish
+# StatShed CLI Fish completion
+# Install: statshed completion fish > ~/.config/fish/completions/statshed.fish
 
-function _reportingin_completion
-    set -l response (env _REPORTINGIN_COMPLETE=fish_complete COMP_WORDS=(commandline -cp) COMP_CWORD=(commandline -t) reportingin)
+function _statshed_completion
+    set -l response (env _STATSHED_COMPLETE=fish_complete COMP_WORDS=(commandline -cp) COMP_CWORD=(commandline -t) statshed)
 
     for completion in $response
         set -l metadata (string split "," -- $completion)
@@ -92,7 +92,7 @@ function _reportingin_completion
     end
 end
 
-complete -c reportingin -f -a "(_reportingin_completion)"
+complete -c statshed -f -a "(_statshed_completion)"
 """
 
 
@@ -132,9 +132,9 @@ def _get_api_url() -> str:
     """
     import os
 
-    from reportingin_cli.config import DEFAULT_URL
+    from statshed_cli.config import DEFAULT_URL
 
-    return os.environ.get("REPORTINGIN_URL", DEFAULT_URL)
+    return os.environ.get("STATSHED_URL", DEFAULT_URL)
 
 
 def complete_group_names(

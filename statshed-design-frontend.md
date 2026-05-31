@@ -1,10 +1,10 @@
-# Reporting In Frontend - Design Document
+# StatShed Frontend - Design Document
 
-A comprehensive rebuild of the Reporting In frontend with improved architecture, Tailwind CSS styling, and modern state management.
+A comprehensive rebuild of the StatShed frontend with improved architecture, Tailwind CSS styling, and modern state management.
 
 ## Overview
 
-This document outlines the complete frontend rebuild for Reporting In, a real-time status dashboard for monitoring cluster job operations. The rebuild addresses pain points in the existing implementation while preserving what works well.
+This document outlines the complete frontend rebuild for StatShed, a real-time status dashboard for monitoring cluster job operations. The rebuild addresses pain points in the existing implementation while preserving what works well.
 
 ### Goals
 

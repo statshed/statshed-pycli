@@ -1,6 +1,6 @@
 # Frontend API Documentation
 
-This document describes the REST API and WebSocket interface that the Reporting In frontend uses to communicate with the backend.
+This document describes the REST API and WebSocket interface that the StatShed frontend uses to communicate with the backend.
 
 ## Base Configuration
 
