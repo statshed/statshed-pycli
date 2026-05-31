@@ -9,9 +9,9 @@ Build-Depends: debhelper-compat (= 13),
                pybuild-plugin-pyproject,
                python3-responses
 Standards-Version: 4.6.2
-Homepage: https://github.com/statshed/statshed-cli
-Vcs-Git: https://github.com/statshed/statshed-cli.git
-Vcs-Browser: https://github.com/statshed/statshed-cli
+Homepage: https://github.com/statshed/statshed-pycli
+Vcs-Git: https://github.com/statshed/statshed-pycli.git
+Vcs-Browser: https://github.com/statshed/statshed-pycli
 Rules-Requires-Root: no
 
 Package: statshed-cli

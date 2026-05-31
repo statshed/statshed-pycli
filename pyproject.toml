@@ -47,11 +47,11 @@ dev = [
 statshed = "statshed_cli.main:cli"
 
 [project.urls]
-Homepage = "https://github.com/statshed/statshed-cli"
-Documentation = "https://github.com/statshed/statshed-cli#readme"
-Repository = "https://github.com/statshed/statshed-cli.git"
-"Bug Tracker" = "https://github.com/statshed/statshed-cli/issues"
-Changelog = "https://github.com/statshed/statshed-cli/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/statshed/statshed-pycli"
+Documentation = "https://github.com/statshed/statshed-pycli#readme"
+Repository = "https://github.com/statshed/statshed-pycli.git"
+"Bug Tracker" = "https://github.com/statshed/statshed-pycli/issues"
+Changelog = "https://github.com/statshed/statshed-pycli/blob/main/CHANGELOG.md"
 
 [build-system]
 requires = ["hatchling"]

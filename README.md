@@ -1,6 +1,6 @@
 # StatShed CLI
 
-[![Tests](https://github.com/statshed/statshed-cli/actions/workflows/test.yml/badge.svg)](https://github.com/statshed/statshed-cli/actions/workflows/test.yml)
+[![Tests](https://github.com/statshed/statshed-pycli/actions/workflows/test.yml/badge.svg)](https://github.com/statshed/statshed-pycli/actions/workflows/test.yml)
 
 Command-line interface for the StatShed status dashboard.
 
