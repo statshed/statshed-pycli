@@ -19,17 +19,23 @@ StatShed CLI uses **Semantic Versioning** (SemVer):
 
 ### Version Locations
 
-The version must be updated in **two places** to stay synchronized:
+**`pyproject.toml` is the single source of truth** for the upstream version:
 
-1. **pyproject.toml** - The authoritative source for package builds:
-   ```toml
-   version = "X.Y.Z"
-   ```
+```toml
+version = "X.Y.Z"
+```
 
-2. **statshed_cli/__init__.py** - Used by `--version` flag:
-   ```python
-   __version__ = "X.Y.Z"
-   ```
+`statshed_cli/__init__.py` derives `__version__` from the installed package
+metadata, and `--version` reads the same metadata, so neither can drift.
+
+Two packaging records carry their own copy of the version and must be bumped to
+match (the release workflow's `check-version` job fails the build on any drift):
+
+- `debian/changelog` — top entry `statshed-cli (X.Y.Z-1) ...`
+- `packaging/rpm/statshed-cli.spec` — `Version: X.Y.Z`
+
+The Nix flake reads the version straight from `pyproject.toml`, so it needs no
+update.
 
 ### Version Formats Across Systems
 
@@ -45,9 +51,9 @@ The version must be updated in **two places** to stay synchronized:
 ### Step 1: Update Version
 
 ```bash
-# Edit both files to update version
-# pyproject.toml: version = "X.Y.Z"
-# statshed_cli/__init__.py: __version__ = "X.Y.Z"
+# Edit pyproject.toml: version = "X.Y.Z"   (the single source of truth)
+# Edit packaging/rpm/statshed-cli.spec: Version: X.Y.Z
+# debian/changelog is updated in Step 3 below via dch.
 ```
 
 ### Step 2: Update Changelog
@@ -102,33 +108,35 @@ uv run mypy statshed_cli
 ### Step 5: Commit Release Changes
 
 ```bash
-git add pyproject.toml statshed_cli/__init__.py CHANGELOG.md debian/changelog
+git add pyproject.toml CHANGELOG.md debian/changelog packaging/rpm/statshed-cli.spec
 git commit -m "Release v${VERSION}"
 ```
 
-### Step 6: Create Git Tag
+### Step 6: Push the Release Tag (triggers everything)
 
 ```bash
-# Create annotated tag
+# Create an annotated tag matching the version (the leading "v" is required)
 git tag -a "v${VERSION}" -m "Release v${VERSION}"
 
-# Push commit and tag
+# Push the commit and the tag
 git push origin main
 git push origin "v${VERSION}"
 ```
 
-### Step 7: Create GitHub Release
+Pushing a `v*` tag runs `.github/workflows/release.yml`, which:
 
-1. Go to the repository's Releases page on GitHub
-2. Click "Draft a new release"
-3. Select the tag you just pushed (e.g., `v1.0.0`)
-4. Set release title: `v1.0.0`
-5. Copy release notes from CHANGELOG.md
-6. Click "Publish release"
+1. **check-version** — verifies the tag, `pyproject.toml`, `debian/changelog`,
+   and the RPM spec all agree (fails fast on drift).
+2. **build-python** — builds the wheel + sdist and runs `twine check`.
+3. **build-deb** — builds `.deb` packages for Debian trixie and Ubuntu noble.
+4. **build-rpm** — builds `.rpm` packages for Fedora and Rocky/EL9.
+5. **publish-pypi** — publishes to PyPI via OIDC Trusted Publishing (no tokens).
+6. **release** — creates the GitHub Release and attaches the wheel, sdist, all
+   `.deb`s, and all `.rpm`s.
 
-This triggers the automated workflows:
-- **publish.yml**: Builds and uploads to PyPI
-- **debian.yml**: Builds Debian packages and attaches to release
+No manual GitHub Release creation is needed. To rehearse a PyPI publish without
+cutting a release, run the workflow manually (`workflow_dispatch`) with
+`test_pypi=true` to push to TestPyPI.
 
 ### Step 8: Verify Publication
 
@@ -147,8 +155,13 @@ statshed --version  # Should show new version
 Check that the following artifacts are attached to the release:
 - `statshed_cli-X.Y.Z.tar.gz` (source distribution)
 - `statshed_cli-X.Y.Z-py3-none-any.whl` (wheel)
-- `statshed-cli_X.Y.Z-1_all.deb` (Ubuntu Noble package)
-- `statshed-cli_X.Y.Z-1_all.deb` (Debian Trixie package)
+- `statshed-cli_X.Y.Z-1_all_debian-trixie.deb`
+- `statshed-cli_X.Y.Z-1_all_ubuntu-noble.deb`
+- `statshed-cli-X.Y.Z-1.*.noarch.fedora.rpm`
+- `statshed-cli-X.Y.Z-1.*.noarch.el9.rpm`
+
+The Nix package is built from the in-repo `flake.nix` (no release asset);
+verify it with `nix run github:statshed/statshed-pycli -- --version`.
 
 #### Debian Package
 

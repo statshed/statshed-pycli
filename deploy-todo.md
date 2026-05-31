@@ -1,6 +1,40 @@
 # StatShed CLI Deployment PRD & Implementation Checklist
 
-This document outlines the complete deployment strategy for statshed-cli, including PyPI publishing, GitHub Actions CI/CD, and Debian packaging.
+> ## STATUS (updated 2026-05-31)
+>
+> Packaging is now implemented in-repo. **Note:** the GitHub repository is
+> `statshed/statshed-pycli` (not `statshed-cli`); the PyPI/distro package name
+> stays `statshed-cli` and the command stays `statshed`.
+>
+> **Implemented:**
+> - One unified workflow `.github/workflows/release.yml` (supersedes the separate
+>   `publish.yml`/`debian.yml` sketched below). A `v*` tag builds the wheel/sdist,
+>   `.deb` (Debian trixie + Ubuntu noble), and `.rpm` (Fedora + Rocky/EL9),
+>   publishes to PyPI via OIDC Trusted Publishing, and creates a GitHub Release
+>   with every artifact attached. A `workflow_dispatch` with `test_pypi=true`
+>   does a TestPyPI dry-run.
+> - Native RPM spec at `packaging/rpm/statshed-cli.spec`.
+> - Nix flake at `flake.nix` (`nix run github:statshed/statshed-pycli`).
+> - Single-source versioning on `pyproject.toml`; a `check-version` job enforces
+>   that the tag, `pyproject.toml`, `debian/changelog`, and the RPM spec agree.
+>
+> **Remaining manual steps (require your accounts/credentials):**
+> 1. Create the GitHub repo `statshed/statshed-pycli`, add it as `origin`, and
+>    push `master` plus tags. (Note: the local `gh` token is currently invalid —
+>    re-auth with `gh auth login` first.)
+> 2. Reserve the `statshed-cli` name on PyPI with a one-time token upload
+>    (`uv build && uv publish`), since Trusted Publishing can't do the first
+>    upload of a non-existent project.
+> 3. Configure the PyPI Trusted Publisher at
+>    `https://pypi.org/manage/project/statshed-cli/settings/publishing/`:
+>    Owner `statshed`, Repository `statshed-pycli`, **Workflow `release.yml`**,
+>    Environment `pypi`. (Optional: a `testpypi` environment for dry-runs.)
+> 4. Optionally add branch protection on `master`.
+>
+> The rest of this document is the original PRD, kept for reference; where it
+> references `publish.yml`/`debian.yml`, read `release.yml`.
+
+This document outlines the complete deployment strategy for statshed-cli, including PyPI publishing (PyPI), RPM, Nix, and Debian packaging via GitHub Actions CI/CD.
 
 ---
 
@@ -94,9 +128,9 @@ This document outlines the complete deployment strategy for statshed-cli, includ
   - [ ] This reserves the name - do this early to prevent name squatting
 - [ ] Configure PyPI trusted publisher (https://pypi.org/manage/project/statshed-cli/settings/publishing/):
   - [ ] Add GitHub Actions as trusted publisher
-  - [ ] Owner: your-github-username
-  - [ ] Repository: statshed-cli
-  - [ ] Workflow name: publish.yml
+  - [ ] Owner: statshed
+  - [ ] Repository: statshed-pycli
+  - [ ] Workflow name: release.yml
   - [ ] Environment name: `pypi`
 - [ ] Configure TestPyPI trusted publisher (https://test.pypi.org/manage/project/statshed-cli/settings/publishing/):
   - [ ] **Prerequisite:** Project must exist on TestPyPI first (upload with test.pypi.org token)
