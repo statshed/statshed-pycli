@@ -15,6 +15,53 @@ For rich terminal output:
 pip install statshed-cli[rich]
 ```
 
+### Nix / NixOS
+
+This repository is a Nix flake, so no separate packaging is required.
+
+Run it without installing (ephemeral):
+```bash
+nix run github:statshed/statshed-pycli -- --version
+```
+
+Install it into your user profile:
+```bash
+nix profile install github:statshed/statshed-pycli
+```
+
+Drop into a throwaway shell that has `statshed` on `PATH`:
+```bash
+nix shell github:statshed/statshed-pycli
+```
+
+From a local checkout, use `.` in place of the `github:` URL (e.g. `nix run .`,
+`nix build .#`).
+
+To install it system-wide, add the flake as an input in your NixOS
+configuration and pull the package into `environment.systemPackages`:
+```nix
+{
+  inputs.statshed-cli.url = "github:statshed/statshed-pycli";
+  # Optional: reuse your system's nixpkgs instead of the flake's pin.
+  inputs.statshed-cli.inputs.nixpkgs.follows = "nixpkgs";
+
+  outputs = { self, nixpkgs, statshed-cli, ... }: {
+    nixosConfigurations.myhost = nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux";
+      modules = [
+        ({ ... }: {
+          environment.systemPackages = [
+            statshed-cli.packages.x86_64-linux.default
+          ];
+        })
+      ];
+    };
+  };
+}
+```
+
+For Home Manager, use `home.packages = [ statshed-cli.packages.${system}.default ];`.
+
 ## Usage
 
 ### Submit Job Status
@@ -382,7 +429,6 @@ dch -i
 
 # Or specify the new version directly
 dch -v 1.0.3-1 "Description of changes"
-```
 ```
 
 ## License
