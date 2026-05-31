@@ -113,37 +113,42 @@ jobs:
         include:
           - image: fedora:latest
             tag: fedora
-          - image: rockylinux:9
-            tag: el9
+          # AIDEV-NOTE: EL9 (Rocky/RHEL 9) ships Python 3.9, but statshed-cli
+          # requires >=3.10 (PEP 604 `X | None` syntax), so its %check fails there.
+          # Re-add an EL target only against a python3.11+/3.12 module stream.
     container:
       image: ${{ matrix.image }}
     steps:
       - name: Install RPM build tooling
         run: |
           set -e
+          EL9_DEPS=""
           if [ "${{ matrix.tag }}" = "el9" ]; then
             dnf install -y epel-release
             dnf install -y dnf-plugins-core || true
             dnf config-manager --set-enabled crb || dnf config-manager --enable crb || true
+            EL9_DEPS="python3-tomli"   # pyproject-rpm-macros needs tomli on py<3.11
           fi
-          dnf install -y git rpm-build rpmdevtools dnf-plugins-core python3-devel pyproject-rpm-macros
+          # AIDEV-NOTE: pre-install every BuildRequire pyproject-rpm-macros emits
+          # (hatchling backend + runtime deps) plus the spec's %check deps, so a plain
+          # `rpmbuild -bb` resolves all BuildRequires. A `rpmbuild -br`+builddep pass
+          # does NOT work here: the spec's static BuildRequires (pytest/responses) are
+          # unmet, so -br errors before writing the buildreqs SRPM.
+          dnf install -y git rpm-build rpmdevtools python3-devel pyproject-rpm-macros \
+            python3-hatchling python3-pip python3-wheel \
+            python3-click python3-requests python3-pyyaml \
+            python3-pytest python3-responses $EL9_DEPS
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4
         with:
           name: python-dist
           path: dist/
-      # AIDEV-NOTE: pyproject-rpm-macros emits BuildRequires dynamically (hatchling,
-      # runtime deps, tomli on EL9). Generate them with -br, install via builddep,
-      # then build. A plain `rpmbuild -bb` fails on the unmet dynamic deps.
-      - name: Build RPM (dynamic BuildRequires via builddep)
+      - name: Build RPM
         run: |
           set -euxo pipefail
           rpmdev-setuptree
           cp dist/statshed_cli-*.tar.gz ~/rpmbuild/SOURCES/
           cp packaging/rpm/statshed-cli.spec ~/rpmbuild/SPECS/
-          rpmbuild -br ~/rpmbuild/SPECS/statshed-cli.spec || true
-          SRPM=$(find ~/rpmbuild/SRPMS -maxdepth 1 \( -name '*.buildreqs.nosrc.rpm' -o -name '*.src.rpm' \) | head -1)
-          dnf builddep -y "$SRPM"
           rpmbuild -bb ~/rpmbuild/SPECS/statshed-cli.spec
           mkdir -p out
           cp ~/rpmbuild/RPMS/noarch/*.rpm out/
