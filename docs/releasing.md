@@ -158,7 +158,6 @@ Check that the following artifacts are attached to the release:
 - `statshed-cli_X.Y.Z-1_all_debian-trixie.deb`
 - `statshed-cli_X.Y.Z-1_all_ubuntu-noble.deb`
 - `statshed-cli-X.Y.Z-1.fc*.noarch.rpm` (Fedora)
-- `statshed-cli-X.Y.Z-1.el9.noarch.rpm` (Rocky/EL9)
 
 The Nix package is built from the in-repo `flake.nix` (no release asset);
 verify it with `nix run github:statshed/statshed-pycli -- --version`.
