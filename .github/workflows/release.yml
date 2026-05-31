@@ -173,7 +173,12 @@ jobs:
           name: python-dist
           path: dist/
       - name: Publish
-        uses: pypa/gh-action-pypi-publish@84a45c1e72de9f9b62a59ee9e740b6ca1b9d639e  # v1.13.0
+        # AIDEV-NOTE: pinned to PyPA's official stable major branch (a composite
+        # action, immune to the Node-version deprecation). Unlike the other actions
+        # this is intentionally NOT a commit SHA: the prior SHA pin was invalid and
+        # broke the job ("unable to find version"). release/v1 is PyPA's documented,
+        # always-valid reference; re-pin to a verified commit SHA later if desired.
+        uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: ${{ (github.event_name == 'workflow_dispatch' && inputs.test_pypi) && 'https://test.pypi.org/legacy/' || 'https://upload.pypi.org/legacy/' }}
 
