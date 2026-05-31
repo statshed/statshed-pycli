@@ -1,0 +1,183 @@
+# AIDEV-NOTE: Unified release pipeline. A `v*` tag builds wheel/sdist, .deb, and
+# .rpm, publishes to PyPI via OIDC Trusted Publishing, and attaches everything to
+# a GitHub Release. workflow_dispatch with test_pypi=true does a TestPyPI dry-run
+# (no .deb/.rpm/Release). Version consistency is enforced before anything builds.
+# AIDEV-NOTE: Actions are pinned to commit SHAs (supply-chain hygiene); update the
+# SHA and the trailing version comment together.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      test_pypi:
+        description: "Publish to TestPyPI instead of building a full release"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+      - name: Versions agree across pyproject, debian, and rpm spec
+        run: |
+          set -euo pipefail
+          PY=$(grep -m1 '^version = ' pyproject.toml | sed -E 's/.*"([^"]+)".*/\1/')
+          DEB=$(sed -nE '1s/.*\(([0-9][^)-]*)-[0-9]+\).*/\1/p' debian/changelog)
+          RPM=$(grep -m1 '^Version:' packaging/rpm/statshed-cli.spec | awk '{print $2}')
+          echo "pyproject=$PY debian=$DEB rpm=$RPM"
+          test -n "$PY" && test "$PY" = "$DEB" && test "$PY" = "$RPM"
+      - name: Tag matches version (tag pushes only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          set -euo pipefail
+          PY=$(grep -m1 '^version = ' pyproject.toml | sed -E 's/.*"([^"]+)".*/\1/')
+          TAG="${GITHUB_REF_NAME#v}"
+          echo "tag=$TAG pyproject=$PY"
+          test "$TAG" = "$PY"
+
+  build-python:
+    needs: check-version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+      - uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a  # v4
+        with:
+          version: "0.5.x"
+      - name: Build sdist + wheel
+        run: uv build
+      - name: Check metadata
+        run: uvx twine check dist/*
+      - uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882  # v4
+        with:
+          name: python-dist
+          path: dist/
+
+  build-deb:
+    needs: check-version
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - distro: debian
+            release: trixie
+          - distro: ubuntu
+            release: noble
+    container:
+      image: ${{ matrix.distro }}:${{ matrix.release }}
+    steps:
+      - name: Install build dependencies
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            git ca-certificates build-essential fakeroot devscripts debhelper \
+            dh-python python3-all python3-hatchling pybuild-plugin-pyproject \
+            python3-responses lintian autopkgtest
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+      - name: Build .deb
+        run: dpkg-buildpackage -us -uc -b
+      - name: Lintian (errors reported, non-fatal)
+        run: lintian --fail-on error ../*.deb || true
+      - name: autopkgtest smoke test (non-fatal)
+        run: autopkgtest ../*.deb -- null || true
+      - name: Stage artifact with distro-unique name
+        run: |
+          mkdir -p out
+          for f in ../*.deb; do
+            cp "$f" "out/$(basename "${f%.deb}")_${{ matrix.distro }}-${{ matrix.release }}.deb"
+          done
+      - uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882  # v4
+        with:
+          name: deb-${{ matrix.distro }}-${{ matrix.release }}
+          path: out/*.deb
+
+  build-rpm:
+    needs: build-python
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: fedora:latest
+            tag: fedora
+          - image: rockylinux:9
+            tag: el9
+    container:
+      image: ${{ matrix.image }}
+    steps:
+      - name: Install build dependencies
+        run: |
+          set -e
+          if [ "${{ matrix.tag }}" = "el9" ]; then
+            dnf install -y epel-release
+            dnf install -y 'dnf-command(config-manager)' || true
+            dnf config-manager --set-enabled crb || dnf config-manager --enable crb || true
+          fi
+          dnf install -y git rpm-build rpmdevtools python3-devel pyproject-rpm-macros \
+            python3-pip python3-pytest python3-responses \
+            python3-click python3-requests python3-pyyaml
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4
+        with:
+          name: python-dist
+          path: dist/
+      - name: Assemble rpmbuild tree and build
+        run: |
+          set -euxo pipefail
+          rpmdev-setuptree
+          cp dist/statshed_cli-*.tar.gz ~/rpmbuild/SOURCES/
+          rpmbuild -bb packaging/rpm/statshed-cli.spec
+          mkdir -p out
+          for f in ~/rpmbuild/RPMS/noarch/*.rpm; do
+            cp "$f" "out/$(basename "${f%.rpm}").${{ matrix.tag }}.rpm"
+          done
+      - uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882  # v4
+        with:
+          name: rpm-${{ matrix.tag }}
+          path: out/*.rpm
+
+  publish-pypi:
+    needs: build-python
+    runs-on: ubuntu-latest
+    environment: ${{ (github.event_name == 'workflow_dispatch' && inputs.test_pypi) && 'testpypi' || 'pypi' }}
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4
+        with:
+          name: python-dist
+          path: dist/
+      - name: Publish
+        uses: pypa/gh-action-pypi-publish@84a45c1e72de9f9b62a59ee9e740b6ca1b9d639e  # v1.13.0
+        with:
+          repository-url: ${{ (github.event_name == 'workflow_dispatch' && inputs.test_pypi) && 'https://test.pypi.org/legacy/' || 'https://upload.pypi.org/legacy/' }}
+
+  release:
+    needs: [build-python, build-deb, build-rpm, publish-pypi]
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4
+        with:
+          path: artifacts/
+      - name: Create release and attach all artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p assets
+          find artifacts -type f \( -name '*.whl' -o -name '*.tar.gz' -o -name '*.deb' -o -name '*.rpm' \) -exec cp {} assets/ \;
+          gh release create "${GITHUB_REF_NAME}" assets/* \
+            --title "${GITHUB_REF_NAME}" \
+            --notes "Automated release ${GITHUB_REF_NAME}. See CHANGELOG.md for details."
