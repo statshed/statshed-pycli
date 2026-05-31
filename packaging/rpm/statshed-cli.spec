@@ -59,5 +59,5 @@ install -Dpm0644 docs/statshed.1 %{buildroot}%{_mandir}/man1/statshed.1
 %{_mandir}/man1/statshed.1*
 
 %changelog
-* Sat May 31 2026 Sean <jafo00+oss@gmail.com> - 1.0.2-1
+* Sun May 31 2026 Sean <jafo00+oss@gmail.com> - 1.0.2-1
 - Initial RPM packaging.

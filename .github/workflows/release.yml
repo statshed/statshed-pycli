@@ -73,15 +73,20 @@ jobs:
     container:
       image: ${{ matrix.distro }}:${{ matrix.release }}
     steps:
-      - name: Install build dependencies
+      - name: Install base build tooling
         run: |
           apt-get update
           DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-            git ca-certificates build-essential fakeroot devscripts debhelper \
-            dh-python python3-all python3-hatchling pybuild-plugin-pyproject \
-            python3-responses lintian autopkgtest
+            git ca-certificates build-essential fakeroot devscripts equivs \
+            debhelper dh-python lintian autopkgtest
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
-      - name: Build .deb
+      # AIDEV-NOTE: install Build-Depends straight from debian/control (single
+      # source of truth) so the build + in-build test suite have pytest/click/etc.
+      - name: Install Build-Depends from debian/control
+        run: |
+          DEBIAN_FRONTEND=noninteractive mk-build-deps --install --remove \
+            --tool "apt-get -y --no-install-recommends" debian/control
+      - name: Build .deb (test suite runs during build)
         run: dpkg-buildpackage -us -uc -b
       - name: Lintian (errors reported, non-fatal)
         run: lintian --fail-on error ../*.deb || true
@@ -113,32 +118,35 @@ jobs:
     container:
       image: ${{ matrix.image }}
     steps:
-      - name: Install build dependencies
+      - name: Install RPM build tooling
         run: |
           set -e
           if [ "${{ matrix.tag }}" = "el9" ]; then
             dnf install -y epel-release
-            dnf install -y 'dnf-command(config-manager)' || true
+            dnf install -y dnf-plugins-core || true
             dnf config-manager --set-enabled crb || dnf config-manager --enable crb || true
           fi
-          dnf install -y git rpm-build rpmdevtools python3-devel pyproject-rpm-macros \
-            python3-pip python3-pytest python3-responses \
-            python3-click python3-requests python3-pyyaml
+          dnf install -y git rpm-build rpmdevtools dnf-plugins-core python3-devel pyproject-rpm-macros
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4
         with:
           name: python-dist
           path: dist/
-      - name: Assemble rpmbuild tree and build
+      # AIDEV-NOTE: pyproject-rpm-macros emits BuildRequires dynamically (hatchling,
+      # runtime deps, tomli on EL9). Generate them with -br, install via builddep,
+      # then build. A plain `rpmbuild -bb` fails on the unmet dynamic deps.
+      - name: Build RPM (dynamic BuildRequires via builddep)
         run: |
           set -euxo pipefail
           rpmdev-setuptree
           cp dist/statshed_cli-*.tar.gz ~/rpmbuild/SOURCES/
-          rpmbuild -bb packaging/rpm/statshed-cli.spec
+          cp packaging/rpm/statshed-cli.spec ~/rpmbuild/SPECS/
+          rpmbuild -br ~/rpmbuild/SPECS/statshed-cli.spec || true
+          SRPM=$(ls ~/rpmbuild/SRPMS/*.buildreqs.nosrc.rpm ~/rpmbuild/SRPMS/*.src.rpm 2>/dev/null | head -1)
+          dnf builddep -y "$SRPM"
+          rpmbuild -bb ~/rpmbuild/SPECS/statshed-cli.spec
           mkdir -p out
-          for f in ~/rpmbuild/RPMS/noarch/*.rpm; do
-            cp "$f" "out/$(basename "${f%.rpm}").${{ matrix.tag }}.rpm"
-          done
+          cp ~/rpmbuild/RPMS/noarch/*.rpm out/
       - uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882  # v4
         with:
           name: rpm-${{ matrix.tag }}
