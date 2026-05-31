@@ -173,7 +173,10 @@ jobs:
           repository-url: ${{ (github.event_name == 'workflow_dispatch' && inputs.test_pypi) && 'https://test.pypi.org/legacy/' || 'https://upload.pypi.org/legacy/' }}
 
   release:
-    needs: [build-python, build-deb, build-rpm, publish-pypi]
+    # AIDEV-NOTE: intentionally NOT dependent on publish-pypi — a PyPI failure
+    # (e.g. version already exists) must not block attaching the .deb/.rpm/wheel
+    # to the GitHub Release. The two distribution channels are independent.
+    needs: [build-python, build-deb, build-rpm]
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
