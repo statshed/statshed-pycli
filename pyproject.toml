@@ -1,6 +1,6 @@
 [project]
 name = "statshed-cli"
-version = "1.0.1"
+version = "1.0.2"
 description = "Command-line interface for StatShed status dashboard"
 readme = "README.md"
 license = {file = "LICENSE"}
